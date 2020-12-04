@@ -9,13 +9,11 @@
 (set! *unchecked-math* :warn-on-boxed)
 (s/check-asserts true)
 
-;; ==================== SERVER ====================
-
-;; Trying this b/c s/how the refer is not seen
+;; The refer is not seen
 (defn print-stack-trace [one two]
   (st/print-cause-trace one two))
 
-(set-refresh-dirs "src/dev" "src/main")
+(set-refresh-dirs "src/dev" "src/main" "src/test")
 
 (defn refresh [& args]
   (tools-ns/refresh))

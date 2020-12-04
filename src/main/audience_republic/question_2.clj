@@ -18,9 +18,11 @@
 
 (def verdict->msg-f
   {:too-sparse (fn [node-count edge-count]
-                 {:failure (str "Too sparse because there are only " edge-count " edges for " node-count " nodes. Edge count can't be less than one less than the node count")})
+                 {:fail-type :too-sparse
+                  :message   (str "Too sparse because there are only " edge-count " edges for " node-count " nodes. Edge count can't be less than one less than the node count")})
    :too-dense  (fn [node-count edge-count]
-                 {:failure (str "Too dense because there are " edge-count " (many) edges to cover only " node-count " nodes")})})
+                 {:fail-type :too-dense
+                  :message   (str "Too dense because there are " edge-count " (many) edges to cover only " node-count " nodes")})})
 
 (defn too-dense? [node-count edge-count]
   (let [max-allowed-edges (quot (* node-count (dec node-count)) 2)]
@@ -94,12 +96,6 @@
   [list-1 list-2]
   (let [in-pairs (map vector list-1 list-2)]
     (not (every? (partial apply not=) in-pairs))))
-
-(deftest not-duplicates
-  (is (not (dups-exist? '(:5 :6) [:3 :9]))))
-
-(deftest are-duplicates
-  (is (dups-exist? '(:5 :9) [:3 :9])))
 
 (defn fix-any-dups [list-1 list-2]
   (loop [list-2 list-2
@@ -183,32 +179,7 @@
    (metrics/don-t-use-connected? example/connected-graph-2)
    (metrics/don-t-use-connected? (assoc-in example/connected-graph-2 [:8 :5] 20))])
 
-(deftest not-enough-edges
-  (is (:failure (generate-graph 10 8))))
-
-(deftest just-enough-edges
-  (is (nil? (:failure (generate-graph 10 9)))))
-
-(deftest edges-promise-kept-1
-  (is (= 9 (metrics/edge-count (generate-graph 10 9)))))
-
-(deftest too-many-edges
-  (is (:failure (generate-graph 10 46))))
-
-(deftest max-edges
-  (is (nil? (:failure (generate-graph 10 45)))))
-
-(deftest edges-promise-kept-2
-  (is (= 45 (metrics/edge-count (generate-graph 10 45)))))
-
-(deftest large-graph
-  (let [g (generate-graph 1000 1010)]
-    (is (= 1000 (metrics/node-count g)))
-    (is (= 1010 (metrics/edge-count g)))
-    ))
-
 (comment
   (generate-graph 10 15)
-  (run-tests)
   (create-no-edges-graph 10)
   (connected-f-was-too-strict))
