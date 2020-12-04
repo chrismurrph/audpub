@@ -1,25 +1,28 @@
 (ns audience-republic.question-1
+  "Graph walking functions that can read directed graphs that now have weights associated with the edges"
   (:require
+    [audience-republic.graph :as gr]
     [au.com.seasoft.general.dev :as dev]
+    [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
     [clojure.test :refer :all])
   (:import (clojure.lang PersistentQueue)))
 
 (def G-1
-  "Directed graph structure"
+  "LEGACY: Directed graph structure"
   {:1 [:2 :3]
    :2 [:4]
    :3 [:4]
    :4 []})
 
 (def G-2a
-  "Directed graph where every edge has a weight"
+  "LEGACY: Directed graph where every edge has a weight"
   {:1 ['(:2 1) '(:3 2)]
    :2 ['(:4 4)]
    :3 ['(:4 2)]
    :4 []})
 
 (def G-2b
-  "Same but with the idiomatic way of representing tuples"
+  "LEGACY: Same but with the idiomatic way of representing tuples"
   {:1 [[:2 1] [:3 2]]
    :2 [[:4 4]]
    :3 [[:4 2]]
@@ -101,10 +104,11 @@
 (deftest test-reverse-graph-back-again
   (is (= (dissoc G-2c :4) (-> G-2b reverse-graph reverse-graph))))
 
-(defn pair->weight
+(>defn pair->weight
   "Given two nodes (alias vertices), if they are connected and there is a weight then return that weight,
   otherwise nil. This is directional"
   [graph source-vertex target-vertex]
+  [::gr/graph ::gr/vertex ::gr/vertex => int?]
   (when graph
     (let [v (get graph source-vertex)]
       (when v
@@ -206,8 +210,8 @@
          (seq-graph-bfs G-2b :1))))
 
 (comment
-  (run-tests)
   (traverse-graph-dfs G-2b :1)
   (seq-graph-dfs G-2b :1)
   (seq-graph-bfs G-2b :1)
+  (run-tests)
   )

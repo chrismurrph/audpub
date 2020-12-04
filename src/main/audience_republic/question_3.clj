@@ -1,16 +1,19 @@
 (ns audience-republic.question-3
+  "Shortest path graph traversal algorithm (Dijkstra)"
   (:require
     [audience-republic.question-2 :as question-2]
     [audience-republic.example :as example]
     [audience-republic.metrics :as metrics]
     [au.com.seasoft.general.dev :as dev]
-    [clojure.test :refer :all]))
+    [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
+    [clojure.test :refer :all])
+  )
 
 (defn view-disconnected-graph []
   (dev/pp 30 example/disconnected-graph))
 
 (defn view-connected-graph []
-  (dev/pp 30 example/connected-graph))
+  (dev/pp 30 example/connected-graph-1))
 
 (deftest test-update-costs
   (let [start-map {:weight ##Inf :path []}
@@ -23,33 +26,25 @@
   (metrics/dijkstra example/disconnected-graph :1))
 
 (deftest shortest-from-1-to-6
-  (is (= [:3 :5 :7 :6] (metrics/shortest-path example/connected-graph :1 :6))))
+  (is (= [:3 :5 :7 :6] (metrics/shortest-path example/connected-graph-1 :1 :6))))
 
 (deftest shortest-from-1-to-12
-  (is (= [:3 :8 :9 :11 :12] (metrics/shortest-path example/connected-graph :1 :12))))
+  (is (= [:3 :8 :9 :11 :12] (metrics/shortest-path example/connected-graph-1 :1 :12))))
 
 (deftest shortest-from-1-to-2
-  (is (= [:3 :4 :2] (metrics/shortest-path example/connected-graph :1 :2))))
-
-(defn x-1 []
-  (let [g {:1 (into {} [[:5 16] [:4 18]])
-           :2 (into {} [[:3 5] [:1 1] [:5 11]])
-           :3 (into {} [[:4 0]])
-           :4 (into {} [[:2 11] [:3 14]])
-           :5 (into {} [[:2 14]])}]
-    (metrics/shortest-path g :1 :5)))
+  (is (= [:3 :4 :2] (metrics/shortest-path example/connected-graph-1 :1 :2))))
 
 (deftest no-path-when-one-does-not-exist
-  (is (some? (metrics/shortest-path example/connected-graph :1 :2))))
+  (is (some? (metrics/shortest-path example/connected-graph-1 :1 :2))))
 
 (defn should-be-able-to-do []
-  (let [random-graph (question-2/G 50 49)
+  (let [random-graph (question-2/G 10 9)
         first-key (-> random-graph keys rand-nth)
         last-key (-> random-graph keys rand-nth)]
     (dev/pp random-graph)
     (dev/log-on "Easiest way to get from" first-key "to" last-key ":" (metrics/D random-graph first-key last-key))
-    (dev/log-on "path diameter" (metrics/path-diameter random-graph))
-    (dev/log-on "connected?" (metrics/connected? random-graph))
+    (dev/log-off "path diameter" (metrics/path-diameter random-graph))
+    (dev/log-off "connected?" (metrics/don-t-use-connected? random-graph))
     ))
 
 (comment

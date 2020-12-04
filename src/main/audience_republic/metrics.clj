@@ -1,6 +1,10 @@
 (ns audience-republic.metrics
+  "Graph traversal (see also question-1)"
   (:require
-    [au.com.seasoft.general.dev :as dev]))
+    [audience-republic.graph :as gr]
+    [au.com.seasoft.general.dev :as dev]
+    [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
+    [cljs.spec.alpha :as s]))
 
 (def infinity Double/POSITIVE_INFINITY)
 
@@ -26,13 +30,14 @@
       node-details-m
       current-node-targets-m)))
 
-(defn dijkstra
+(>defn dijkstra
   "Given a starting point returns details about every node in the graph. Details include the least
   accumulated weight to get there as well as the path taken. If specify an end-node then the details
   just for it are returned. If maximise-weight? is specified then the greatest accumulated weight to get
   there is reported. Think of wanting to accumulate gold along the joins rather than using up fuel by
   riding to the destination"
   ([g start-node end-node {:keys [maximise-weight? ignore-current-unaltered?] :as options}]
+   [::gr/graph ::gr/vertex ::gr/vertex map? => map?]
    (let [repulsive-amount (if maximise-weight? -1 infinity)
          key-compare (if maximise-weight? max-key min-key)]
      (loop [nodes-details-m (assoc (zipmap (keys g) (repeat {:weight repulsive-amount}))
@@ -60,8 +65,10 @@
              (dev/log-off "next unvisited" next-unvisited)
              (recur next-node-details-m next-node next-unvisited)))))))
   ([g start-node options]
+   [::gr/graph ::gr/vertex map? => map?]
    (dijkstra g start-node nil options))
   ([g start-node]
+   [::gr/graph ::gr/vertex => map?]
    (dijkstra g start-node nil {})))
 
 (defn batch-smallest-weight-hof
@@ -92,18 +99,20 @@
       dev/probe-off
       :path))
 
-(defn shortest-path
+(>defn shortest-path
   "The shortest (least cost/weight/distance) path from src-key to dest-key. Returns a vector of these keys
   that doesn't include src-key but does include dest-key as the last element. Calls a `dijkstra` fn that
   short-circuits"
   [g src-key dest-key]
+  [::gr/graph ::gr/vertex ::gr/vertex => ::gr/vertices]
   (-> (dijkstra g src-key dest-key {})
       dev/probe-off
       :path))
 
-(defn eccentricity
+(>defn eccentricity
   "the greatest distance between v and any other vertex, where distance is the shortest path"
   [g vertex]
+  [::gr/graph ::gr/vertex => int?]
   (let [distance-from-f (batch-smallest-weight-hof g vertex)
         other-vertices (remove #{vertex} (keys g))
         distances (map distance-from-f other-vertices)]
@@ -115,19 +124,24 @@
   (let [distance-from-f (batch-smallest-path-hof g vertex)
         other-vertices (remove #{vertex} (keys g))
         distances (->> (map distance-from-f other-vertices)
+                       dev/probe-off
                        (map count))]
-    (apply max distances)))
+    (if (empty? distances)
+      0
+      (apply max distances))))
 
-(defn radius
+(>defn radius
   "the minimum eccentricity of any vertex in a graph"
   [g]
+  [::gr/graph => int?]
   (let [all-vertices (keys g)
         all-eccentricities (map (partial eccentricity g) all-vertices)]
     (apply min all-eccentricities)))
 
-(defn diameter
+(>defn diameter
   "the maximum eccentricity of any vertex in a graph"
   [g]
+  [::gr/graph => int?]
   (let [all-vertices (keys g)
         all-eccentricities (->> all-vertices
                                 (map (partial eccentricity g))
@@ -136,7 +150,7 @@
     res))
 
 (defn path-diameter
-  "the maximum eccentricity of any vertex in a graph"
+  "the maximum path-eccentricity of any vertex in a graph"
   [g]
   (let [all-vertices (keys g)
         all-eccentricities (->> all-vertices
@@ -144,8 +158,26 @@
         res (apply max all-eccentricities)]
     res))
 
-(defn connected? [g]
+(defn don-t-use-connected?
+  "Is the directed graph a connected one? Are all points reachable somehow? No islands.
+  Hmm - here path is determined by the weight, so not much use. The kind of connected we
+  care about (and intended here) is independent of direction"
+  [g]
   (= (-> g keys count dec) (path-diameter g)))
+
+(>defn edge-count
+  [g]
+  [::gr/graph => int?]
+  (reduce
+    (fn [n [k v]]
+      (+ n (count v)))
+    0
+    g))
+
+(>defn node-count
+  [g]
+  [::gr/graph => int?]
+  (-> g keys count))
 
 (def D shortest-path)
 
