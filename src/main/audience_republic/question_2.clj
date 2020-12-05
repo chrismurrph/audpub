@@ -2,12 +2,18 @@
   "Randomly generate a simple directed graph"
   (:require
     [audience-republic.metrics :as metrics]
-    [audience-republic.example :as example]
+    [audience-republic.example-data :as example]
     [audience-republic.graph :as gr]
+    [audience-republic.util :as util]
     [au.com.seasoft.general.dev :as dev]
     [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
     [clojure.test :refer :all]
     ))
+
+(defn connected-f-was-too-strict []
+  [(metrics/don-t-use-connected? example/unreachable-nodes-graph)
+   (metrics/don-t-use-connected? example/connected-graph-2)
+   (metrics/don-t-use-connected? (assoc-in example/connected-graph-2 [:8 :5] 20))])
 
 (>defn create-no-edges-graph
   [n]
@@ -15,6 +21,10 @@
   (let [nodes (->> (range 1 (inc n))
                    (map (comp keyword str)))]
     (zipmap nodes (repeat {}))))
+
+(comment
+  (create-no-edges-graph 10)
+  (connected-f-was-too-strict))
 
 (def verdict->msg-f
   {:too-sparse (fn [node-count edge-count]
@@ -36,7 +46,7 @@
     (too-dense? node-count edge-count) :too-dense
     :else :okay))
 
-(>defn reject-target-assignment?
+(>defn bad-target-assignment?
   "Return true for rejection of proposed-key. Two types of rejection. Either assigning the target vertex onto the
   same source vertex, or assigning the target vertex where that target already exists"
   [source-key existing-targets proposed-key]
@@ -48,7 +58,7 @@
 (defn make-alternative-source [node-count]
   (assert (pos-int? node-count))
   (let [res (-> node-count rand-int inc str keyword)]
-    (assert (not= res :0) ["alternative-source is strange" res node-count])
+    (assert (not= res :0) ["alternative-source is strange (':0')" res node-count])
     res))
 
 (defn adjust-pairs-for-rejects [node-count pairs rejects]
@@ -75,7 +85,7 @@
       (dev/log-off "At count" times "for pairs-into-graph. This means a rejection is being fixed"))
     (let [{:keys [graph rejects]} (reduce
                                     (fn [{:keys [graph rejects] :as acc} [source target]]
-                                      (let [reject? (reject-target-assignment? source (get graph source) target)]
+                                      (let [reject? (bad-target-assignment? source (get graph source) target)]
                                         (if reject?
                                           {:rejects (conj rejects target)
                                            :graph   graph}
@@ -91,12 +101,6 @@
           graph
           (inc times))))))
 
-(defn dups-exist?
-  "If the same thing is at the same index then that's a duplicate"
-  [list-1 list-2]
-  (let [in-pairs (map vector list-1 list-2)]
-    (not (every? (partial apply not=) in-pairs))))
-
 (defn fix-any-dups [list-1 list-2]
   (loop [list-2 list-2
          times 0]
@@ -104,14 +108,9 @@
       (dev/pp list-1)
       (dev/pp list-2)
       (dev/err "Too many loops for fix-any-dups"))
-    (if (dups-exist? list-1 list-2)
+    (if (util/dups-exist? list-1 list-2)
       (recur (shuffle list-2) (inc times))
       [list-1 list-2])))
-
-(defn shuffle-pairs [pairs]
-  (let [list-1 (map first pairs)
-        list-2 (map second pairs)]
-    (map vector (shuffle list-1) (shuffle list-2))))
 
 (defn make-connected-graph
   "Create a graph, check that it is connected? and if not try again. This feature not currently being used,
@@ -131,23 +130,29 @@
         (dev/log-a "At count" times "for" msg "is the graph connected?" connected?))
       (if connected?
         new-graph
-        (recur (shuffle-pairs pairs) (inc times))))))
+        (recur (util/shuffle-pairs pairs) (inc times))))))
 
 (>defn produce-edges-2
-  "Create edges, forming a line joining all the nodes together. A bit contrived but
-  at least the graph will definitely be connected"
+  "Create edges, forming a long line joining all the nodes together. It is one line but it sometimes
+  changes direction (using util/changing-booleans), giving us a more interesting graph. Most important
+  is 'one line', meaning no islands"
   [nodes]
   [::gr/shuffled-vertices => ::gr/edges]
-  (let [pool nodes
-        [new-target new-pool] ((juxt peek pop) pool)]
-    (loop [pool new-pool
+  (let [xs nodes
+        arrows (util/changing-booleans (count nodes))
+        [target new-xs] ((juxt peek pop) xs)]
+    (loop [xs new-xs
+           arrows arrows
            result []
-           last-target new-target]
-      (if (empty? pool)
+           last-target target]
+      (if (empty? xs)
         result
-        (let [[new-target new-pool] ((juxt peek pop) pool)
-              new-edge [last-target new-target]]
-          (recur new-pool (conj result new-edge) new-target))))))
+        (let [[target remaining-xs] ((juxt peek pop) xs)
+              [arrow? remaining-arrows] ((juxt peek pop) arrows)
+              new-edge (if arrow?
+                         [last-target target]
+                         [target last-target])]
+          (recur remaining-xs remaining-arrows (conj result new-edge) target))))))
 
 (defn produce-edges-1 [extra-edges-required nodes]
   (let [extra-sources (take extra-edges-required (shuffle nodes))
@@ -167,6 +172,7 @@
         (if (pos? num-extra-edges-required)
           (let [extra-pairs (produce-edges-2 (->> (cycle nodes)
                                                   (take (+ num-extra-edges-required 2))
+                                                  shuffle
                                                   (into '())))]
             (make-connected-graph node-count extra-pairs filled-graph "filling extra"))
           filled-graph))
@@ -174,12 +180,6 @@
 
 (def G generate-graph)
 
-(defn connected-f-was-too-strict []
-  [(metrics/don-t-use-connected? example/disconnected-graph)
-   (metrics/don-t-use-connected? example/connected-graph-2)
-   (metrics/don-t-use-connected? (assoc-in example/connected-graph-2 [:8 :5] 20))])
-
 (comment
-  (generate-graph 10 15)
-  (create-no-edges-graph 10)
-  (connected-f-was-too-strict))
+  (dev/pp (generate-graph 20 25))
+  )

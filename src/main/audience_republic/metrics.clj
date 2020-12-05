@@ -30,6 +30,12 @@
       node-details-m
       current-node-targets-m)))
 
+(defn weight->nil [m repulsive-amount]
+  "If the weight was unaffected then it is unknown, so set it to nil"
+  (update m :weight (fn [w]
+                      (when (not= w repulsive-amount)
+                        w))))
+
 (>defn dijkstra
   "Given a starting point returns details about every node in the graph. Details include the least
   accumulated weight to get there as well as the path taken. If specify an end-node then the details
@@ -37,7 +43,7 @@
   there is reported. Think of wanting to accumulate gold along the joins rather than using up fuel by
   riding to the destination"
   ([g start-node end-node {:keys [maximise-weight? ignore-current-unaltered?] :as options}]
-   [::gr/graph ::gr/vertex ::gr/vertex map? => map?]
+   [::gr/graph ::gr/vertex (? ::gr/vertex) map? => map?]
    (let [repulsive-amount (if maximise-weight? -1 infinity)
          key-compare (if maximise-weight? max-key min-key)]
      (loop [nodes-details-m (assoc (zipmap (keys g) (repeat {:weight repulsive-amount}))
@@ -47,14 +53,18 @@
        (let [visited-all? (empty? unvisited)
              current-unaltered? (= repulsive-amount (get-in nodes-details-m [current-node :weight]))]
          (when (and current-unaltered? ignore-current-unaltered?)
-           ;; Happens for nodes that are unreachable, here (disconnected-large-input) :2 and :4
+           ;; Happens for nodes that are unreachable, here (unreachable-nodes-large-input) :2 and :4
            (dev/log-a "IGNORING fact that current round was not altered last round" current-node))
          (cond
            (= current-node end-node)
-           (get nodes-details-m end-node)
+           (-> (get nodes-details-m end-node)
+               (weight->nil repulsive-amount))
 
            (or visited-all? (and current-unaltered? (not ignore-current-unaltered?)))
-           nodes-details-m
+           (->> nodes-details-m
+                (map (fn [[k v]]
+                       [k (weight->nil v repulsive-amount)]))
+                (into {}))
 
            :else
            (let [next-node-details-m (update-weights-and-path g nodes-details-m unvisited current-node maximise-weight?)
@@ -102,9 +112,9 @@
 (>defn shortest-path
   "The shortest (least cost/weight/distance) path from src-key to dest-key. Returns a vector of these keys
   that doesn't include src-key but does include dest-key as the last element. Calls a `dijkstra` fn that
-  short-circuits"
+  short-circuits. If there is no path returns nil"
   [g src-key dest-key]
-  [::gr/graph ::gr/vertex ::gr/vertex => ::gr/vertices]
+  [::gr/graph ::gr/vertex ::gr/vertex => (? ::gr/vertices)]
   (-> (dijkstra g src-key dest-key {})
       dev/probe-off
       :path))
@@ -112,11 +122,12 @@
 (>defn eccentricity
   "the greatest distance between v and any other vertex, where distance is the shortest path"
   [g vertex]
-  [::gr/graph ::gr/vertex => int?]
+  [::gr/graph ::gr/vertex => (? int?)]
   (let [distance-from-f (batch-smallest-weight-hof g vertex)
         other-vertices (remove #{vertex} (keys g))
-        distances (map distance-from-f other-vertices)]
-    (apply max distances)))
+        distances (keep distance-from-f other-vertices)]
+    (when (-> distances empty? not)
+      (apply max distances))))
 
 (defn path-eccentricity
   "the greatest distance between v and any other vertex, where distance is the shortest path"
@@ -133,21 +144,21 @@
 (>defn radius
   "the minimum eccentricity of any vertex in a graph"
   [g]
-  [::gr/graph => int?]
+  [::gr/graph => (? int?)]
   (let [all-vertices (keys g)
-        all-eccentricities (map (partial eccentricity g) all-vertices)]
-    (apply min all-eccentricities)))
+        all-eccentricities (keep (partial eccentricity g) all-vertices)]
+    (when (-> all-eccentricities empty? not)
+      (apply min all-eccentricities))))
 
 (>defn diameter
   "the maximum eccentricity of any vertex in a graph"
   [g]
-  [::gr/graph => int?]
+  [::gr/graph => (? int?)]
   (let [all-vertices (keys g)
         all-eccentricities (->> all-vertices
-                                (map (partial eccentricity g))
-                                (remove #{##Inf}))
-        res (apply max all-eccentricities)]
-    res))
+                                (keep (partial eccentricity g)))]
+    (when (-> all-eccentricities empty? not)
+      (apply max all-eccentricities))))
 
 (defn path-diameter
   "the maximum path-eccentricity of any vertex in a graph"

@@ -3,13 +3,13 @@
     [audience-republic.question-2 :as q2]
     [audience-republic.metrics :as metrics]
     [clojure.test :refer :all]
-    ))
+    [audience-republic.util :as util]))
 
 (deftest not-duplicates
-         (is (not (q2/dups-exist? '(:5 :6) [:3 :9]))))
+  (is (not (util/dups-exist? '(:5 :6) [:3 :9]))))
 
 (deftest are-duplicates
-         (is (q2/dups-exist? '(:5 :9) [:3 :9])))
+         (is (util/dups-exist? '(:5 :9) [:3 :9])))
 
 (deftest not-enough-edges
   (is (= :too-sparse (:fail-type (q2/generate-graph 10 8)))))
@@ -38,6 +38,3 @@
 (comment
   (run-tests)
   )
-
-
-

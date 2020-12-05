@@ -31,6 +31,7 @@ resources/public/images
 resources/public/css
 resources/public/fonts
 resources/public/workspaces
+resources/*.edn
 favicon.ico
 target
 out

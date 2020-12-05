@@ -90,21 +90,21 @@
   graph and then said to show weights between the nodes: 'from the start to end vertex'. When there is no weight a
   nil is put in centre position"
   ([graph pair reversed-graph]
-   [::gr/graph ::gr/pair ::gr/graph => (? ::gr/weight)]
+   [::gr/graph ::gr/pair ::gr/graph => (? ::gr/traversal)]
    (if-let [weight (pair->weight graph pair)]
-     weight
+     [true weight]
      (when-let [reversed-weight (pair->weight reversed-graph pair)]
-       reversed-weight)))
+       [false reversed-weight])))
   ([graph pair]
-   [::gr/graph ::gr/pair => ::gr/weight]
+   [::gr/graph ::gr/pair => (? ::gr/traversal)]
    (lookup-weight-f graph pair nil)))
 
 (>defn traverse-graph-dfs
   "Debuggable version of seq-graph, as it doesn't use lazy sequences"
-  [g s ignore-direction?]
-  [::gr/graph ::gr/vertex boolean? => ::gr/traversal]
+  [g s]
+  [::gr/graph ::gr/vertex => ::gr/graph-traversal]
   (let [first-node [s nil nil]
-        reversed-graph (when ignore-direction? (reverse-graph g))]
+        reversed-graph (reverse-graph g)]
     (dev/log-off "g" g)
     (loop [last-vertex nil
            ongoing-traversal []
@@ -114,13 +114,13 @@
       (if (empty? frontier)
         (next ongoing-traversal)
         (let [[vertex weight :as v] (peek frontier)
-              weighted-edge [last-vertex (lookup-weight-f g [last-vertex vertex] reversed-graph) vertex]
+              edge-traversal [last-vertex (lookup-weight-f g [last-vertex vertex] reversed-graph) vertex]
               targets (get g vertex)
               neighbours-vertices (map first targets)]
           (dev/log-off "vertex neighbours/targets" vertex targets)
           (recur
             vertex
-            (conj ongoing-traversal weighted-edge)
+            (conj ongoing-traversal edge-traversal)
             (into explored neighbours-vertices)
             (into (pop frontier) (remove #(explored (first %)) targets))))))))
 
@@ -131,28 +131,28 @@
   Sometimes the traversal order goes against the 'weight arrows'. When it does by default nil is put down for the weight.
   Weights are directional. To relax this restriction set ignore-direction? to true. The 'take home' here is that this is
   a traversal, *not* making a copy. If you think it is a pity to lose the weight information set ignore-direction? to true"
-  [d ignore-direction?]
+  [d]
   (fn [g s]
-    (let [reversed-graph (when ignore-direction? (reverse-graph g))]
+    (let [reversed-graph (reverse-graph g)]
       (next ((fn rec-seq [last-vertex explored frontier]
                (lazy-seq
                  (if (empty? frontier)
                    nil
                    (let [[vertex weight :as v] (peek frontier)
-                         weighted-edge [last-vertex (lookup-weight-f g [last-vertex vertex] reversed-graph) vertex]
+                         edge-traversal [last-vertex (lookup-weight-f g [last-vertex vertex] reversed-graph) vertex]
                          targets (get g vertex)
                          neighbours-vertices (map first targets)]
-                     (cons weighted-edge (rec-seq
-                                         vertex
-                                         (into explored neighbours-vertices)
-                                         (into (pop frontier) (remove #(explored (first %)) targets))))))))
+                     (cons edge-traversal (rec-seq
+                                            vertex
+                                            (into explored neighbours-vertices)
+                                            (into (pop frontier) (remove #(explored (first %)) targets))))))))
              nil #{s} (conj d [s nil nil]))))))
 
-(def seq-graph-dfs (seq-graph-hof [] true))
-(def seq-graph-bfs (seq-graph-hof (PersistentQueue/EMPTY) true))
+(def seq-graph-dfs (seq-graph-hof []))
+(def seq-graph-bfs (seq-graph-hof (PersistentQueue/EMPTY)))
 
 (comment
-  (traverse-graph-dfs G :1 true)
+  (traverse-graph-dfs G :1)
   (seq-graph-dfs G :1)
   (seq-graph-bfs G :1)
   )

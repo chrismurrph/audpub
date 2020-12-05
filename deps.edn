@@ -7,6 +7,7 @@
  :aliases {:tset      {:extra-paths ["src/test"]}
            :run-tests {:extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                                                :sha     "209b64504cb3bd3b99ecfec7937b358a879f55c1"}}
+                       :jvm-opts   ["-Dguardrails.enabled=true"]
                        :main-opts  ["-m" "cognitect.test-runner"]}
            :dev       {:extra-paths ["src/dev" "src/test"]
                        :extra-deps  {org.clojure/tools.namespace {:mvn/version "0.3.1"}

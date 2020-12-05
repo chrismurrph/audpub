@@ -1,0 +1,59 @@
+:source-highlighter: coderay
+:source-language: clojure
+:toc:
+:toc-placement: preamble
+:sectlinks:
+:sectanchors:
+:sectnums:
+
+== Sanity check
+
+`make test`
+
+Will run all the tests from `audience-republic.question-[1|2|3|4]-test`.
+
+== Code
+
+This is a `deps.edn` project with the alias `:dev`. Please setup a REPL to try out the answers.
+
+A good place for an overview is the domain. The Clojure spec namespace `audience-republic.graph`
+is aliased `gr`. So for example `::gr/graph-traversal` is the data structure for a traversal across a
+`::gr/graph`.
+
+To run code look to the bottom of the namespaces `audience-republic.question-[1|2|3|4]`.
+The functions in the `comment` form answer the question.
+
+A library called Guardrails has been used to put our Clojure spec types around some of the functions.
+Set `-Dguardrails.enabled=true` as JVM args if you want to turn spec on. Purely optional.
+Guardrails is turned on for the unit tests so any typing errors are picked up with `make test`.
+
+== Question 1
+
+This question asked to enhance graph reading functions to handle `weight`, suggesting that the input data
+structure given be altered in the process. Obviously the output would change as well.
+I changed the functions and they now take `::gr/graph` as input and output a `::gr/graph-traversal`.
+
+These functions recognise when they are traversing the graph in the opposite direction to the arrow. To achieve
+this a lookup is done on a reversed graph. Thus the resultant `::gr/graph-traversal` retains the information
+necessary to convert back to the canonical data structure (`::gr/graph`).
+
+== Question 2
+
+For our purposes a connected graph is one for which every node can be visited using the edges that connect them
+together, while ignoring the direction of the arrows. Thus there are no 'islands' of nodes. This can be achieved
+by drawing a line through all the nodes. To make the resultant graph more interesting the nodes are first
+shuffled and the arrows do not all point the same way. Once N-1 edges have been created in this way we have a
+connected but maximally sparse graph. Next any extra edges are added using the same code, but
+instead of inputting the edges that go through every node we thread through the correct number of missing edges,
+which might be all the nodes repeated a few times or a subset of all the nodes.
+
+== Question 3
+
+There's a function `audience-republic.question-3\should-be-able-to-write` that has the example code in it.
+You may have to run it a few times to see examples of a path variously being found and not found.
+
+== Question 4
+
+There's a function `audience-republic.question-4\should-be-able-to-write` that has the example code in it.
+
+

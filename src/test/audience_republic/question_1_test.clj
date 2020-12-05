@@ -27,7 +27,7 @@
         g q1/G
         rev-g (q1/reverse-graph g)]
     (is
-      (= [2 2 2 nil nil 4]
+      (= [[true 2] [false 2] [true 2] nil nil [false 4]]
          [(f g [:1 :3] rev-g)
           (f g [:4 :3] rev-g)
           (f g [:3 :4] rev-g)
@@ -36,21 +36,17 @@
           (f g [:4 :2] rev-g)]))))
 
 (deftest debuggable-depth-first
-  (is (= '([:1 2 :3] [:3 2 :4] [:4 4 :2])
-         (q1/traverse-graph-dfs q1/G :1 true))))
+  (is (= '([:1 [true 2] :3] [:3 [true 2] :4] [:4 [false 4] :2])
+         (q1/traverse-graph-dfs q1/G :1))))
 
 (deftest lazy-seq-depth-first
-  (is (= '([:1 2 :3] [:3 2 :4] [:4 4 :2])
+  (is (= '([:1 [true 2] :3] [:3 [true 2] :4] [:4 [false 4] :2])
          (q1/seq-graph-dfs q1/G :1))))
 
 (deftest lazy-seq-breadth-first
-  (is (= '([:1 1 :2] [:2 nil :3] [:3 2 :4])
+  (is (= '([:1 [true 1] :2] [:2 nil :3] [:3 [true 2] :4])
          (q1/seq-graph-bfs q1/G :1))))
 
 (comment
   (run-tests)
   )
-
-
-
-
