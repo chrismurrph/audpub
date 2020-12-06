@@ -1,8 +1,8 @@
 (ns audience-republic.question-4-test
   (:require
     [audience-republic.metrics :as metrics]
-    [clojure.test :refer :all]
-    [audience-republic.example-data :as example]))
+    [audience-republic.example-data :as example]
+    [clojure.test :refer :all]))
 
 (deftest longest-from-1-to-2
   (is (= [:3 :4 :2] (metrics/longest-path example/connected-graph-1 :1 :2))))
@@ -15,7 +15,7 @@
     (is (= [:3 :4 :7 :8 :9 :10 :12] (longest-path :12)))))
 
 ;;
-;; Note that these tests have not yet been independently verified. Just coded and got the answers!
+;; Note that these tests have not yet been independently verified. Just coded and got the answers.
 ;;
 
 (deftest eccentricity-of-connected
@@ -26,11 +26,6 @@
 
 (deftest diameter-of-connected
   (is (= 54 (metrics/diameter example/connected-graph-1))))
-
-;;
-;; They probably don't all have meaning for a disconnected graph. I've decided to consider testing for connectedness
-;; to be beyond the scope of the questions.
-;;
 
 (deftest eccentricity-of-disconnected
   (is (= 44 (metrics/eccentricity example/unreachable-nodes-graph :1))))

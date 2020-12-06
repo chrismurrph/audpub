@@ -1,18 +1,5 @@
 (ns audience-republic.util)
 
-(defn dups-exist?
-  "If the same thing is at the same index then that's a duplicate"
-  [list-1 list-2]
-  (let [in-pairs (map vector list-1 list-2)]
-    (not (every? (partial apply not=) in-pairs))))
-
-(defn shuffle-pairs
-  "Put the pairs back together again, completely randomly"
-  [pairs]
-  (let [list-1 (map first pairs)
-        list-2 (map second pairs)]
-    (map vector (shuffle list-1) (shuffle list-2))))
-
 (defn changing-booleans
   "Outputs streams of either true or false"
   [n]

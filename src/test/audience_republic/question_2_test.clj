@@ -2,16 +2,9 @@
   (:require
     [audience-republic.question-2 :as q2]
     [audience-republic.metrics :as metrics]
-    [clojure.test :refer :all]
-    [audience-republic.util :as util]
     [audience-republic.example-data :as example]
-    [au.com.seasoft.general.dev :as dev]))
-
-(deftest not-duplicates
-  (is (not (util/dups-exist? '(:5 :6) [:3 :9]))))
-
-(deftest are-duplicates
-         (is (util/dups-exist? '(:5 :9) [:3 :9])))
+    [clojure.test :refer :all]
+    ))
 
 (deftest not-enough-edges
   (is (= :too-sparse (:fail-type (q2/generate-graph 10 8)))))

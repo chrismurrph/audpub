@@ -5,16 +5,11 @@
     [audience-republic.example-data :as example]
     [audience-republic.metrics :as metrics]
     [au.com.seasoft.general.dev :as dev]
-    [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
     ))
 
-(defn view-unreachable-nodes-graph []
-  (dev/pp 30 example/unreachable-nodes-graph))
-
-(defn view-connected-graph []
-  (dev/pp 30 example/connected-graph-1))
-
-(defn run-example-dijkstra []
+(defn run-example-dijkstra
+  "See here that where a node is unreachable we explicitly give it a :weight of nil, with :path left out of the map"
+  []
   (dev/pp (metrics/dijkstra example/unreachable-nodes-graph :1)))
 
 (defn should-be-able-to-write []
@@ -33,5 +28,6 @@
   (metrics/shortest-path example/connected-graph-1 :1 :12)
   (metrics/shortest-path example/unreachable-nodes-graph :1 :2)
   (metrics/shortest-path example/connected-graph-1 :1 :2)
+  (run-example-dijkstra)
   )
 

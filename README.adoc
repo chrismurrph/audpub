@@ -30,7 +30,7 @@ Guardrails is turned on for the unit tests so any typing errors are picked up wi
 == Question 1
 
 This question asked to enhance graph reading functions to handle `weight`, suggesting that the input data
-structure given be altered in the process. Obviously the output would change as well.
+structure given (the graph) be altered in the process. Obviously the output would change as well.
 I changed the functions and they now take `::gr/graph` as input and output a `::gr/graph-traversal`.
 
 These functions recognise when they are traversing the graph in the opposite direction to the arrow. To achieve
@@ -39,21 +39,28 @@ necessary to convert back to the canonical data structure (`::gr/graph`).
 
 == Question 2
 
+Generate a connected directed graph.
+
 For our purposes a connected graph is one for which every node can be visited using the edges that connect them
-together, while ignoring the direction of the arrows. Thus there are no 'islands' of nodes. This can be achieved
-by drawing a 'line' through all the nodes, but with individual arrows pointing in different directions.
+all together, while ignoring the direction of the arrows. Thus there are no 'islands' of nodes. This can be achieved
+by drawing a 'line' through all the nodes, but with individual edges/arrows pointing in different directions.
 Once N-1 edges have been created in this way we have a connected but maximally sparse graph, that can have
 unreachable nodes. Next any extra edges need to be added. We no longer need to worry about the graph being connected:
 that can't be un-done. As we now add edges we make sure to avoid clashes, where a clash is a node targeting itself or
-a node that targets another node more than once.
+a node targeting another node more than once.
 
 == Question 3
+
+Write an implementation of Dijkstra's algorithm that traverses your graph and outputs the shortest path between any 2
+randomly selected vertices.
 
 There's a function `audience-republic.question-3\should-be-able-to-write` that has the example code in it.
 You may have to run it a few times to see examples of a path variously being found and not found.
 
 == Question 4
 
-There's a function `audience-republic.question-4\should-be-able-to-write` that has the example code in it.
+Write a suite of functions to calculate distance properties (eccentricity, radius, diameter) for your graph.
+
+`audience-republic.question-4\should-be-able-to-write` has the example code in it.
 
 

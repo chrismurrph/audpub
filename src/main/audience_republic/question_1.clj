@@ -36,7 +36,7 @@
 
 (>defn reverse-graph
   "Changes the direction of the arrows, in terms of the drawing of a graph that the data structure represents.
-  Used for being able to find a weight between two vertices across the wrong direction"
+  Used for being able to find a weight between two vertices across the wrong (target -> source) direction"
   [graph]
   [::gr/graph => ::gr/graph]
   (->> graph
@@ -49,7 +49,8 @@
 
 (>defn pair->weight
   "Given two nodes (alias vertices), if they are connected and there is a weight then return that weight,
-  otherwise nil. This is directional"
+  otherwise nil. The [source-vertex target-vertex] pair needs to be connected in the right direction to produce a
+  non-nil result"
   [graph [source-vertex target-vertex]]
   [::gr/graph ::gr/pair => (? int?)]
   (when graph
@@ -61,8 +62,10 @@
              second)))))
 
 (>defn lookup-weight-f
-  "If reversed-graph parameter is not nil then if you go from one node to another the weight will be used no matter which
-  node it points to. When there is no weight a nil is put"
+  "If the graph has a weight between the nodes of the pair it will be picked up, no matter whether the graph's arrow's
+  direction is with the request or against it. 'against' means a false is returned in the first position of the
+  ::gr/traversal.
+  When there is no weight a nil is put"
   ([graph pair reversed-graph]
    [::gr/graph ::gr/pair ::gr/graph => (? ::gr/traversal)]
    (if-let [weight (pair->weight graph pair)]

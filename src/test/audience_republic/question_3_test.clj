@@ -1,8 +1,9 @@
 (ns audience-republic.question-3-test
   (:require
     [audience-republic.metrics :as metrics]
+    [audience-republic.example-data :as example]
     [clojure.test :refer :all]
-    [audience-republic.example-data :as example]))
+    ))
 
 (deftest test-update-costs
   (let [start-map {:weight ##Inf :path []}
@@ -21,7 +22,7 @@
   (is (= [:3 :4 :2] (metrics/shortest-path example/connected-graph-1 :1 :2))))
 
 (deftest no-path-when-one-does-not-exist
-  (is (some? (metrics/shortest-path example/connected-graph-1 :1 :2))))
+  (is (nil? (metrics/shortest-path example/unreachable-nodes-graph :1 :2))))
 
 (comment
   (run-tests)
