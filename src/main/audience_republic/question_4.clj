@@ -13,7 +13,7 @@
         eccentricity (metrics/eccentricity random-graph first-key)
         radius (metrics/radius random-graph)
         diameter (metrics/diameter random-graph)]
-    (dev/pp random-graph)
+    (dev/pp 40 random-graph)
     (dev/log-on "The eccentricity of vertex" first-key "is" eccentricity)
     (dev/log-on "The radius of the graph is" radius)
     (dev/log-on "The diameter of the graph is" diameter)
