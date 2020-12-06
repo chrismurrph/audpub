@@ -73,26 +73,14 @@
    [::gr/graph ::gr/vertex => map?]
    (dijkstra g start-node nil {})))
 
-(defn batch-lowest-weight-hof
-  "Construct a new function per src-key and use this function again and again for each dest-key that have"
-  [g src-key]
-  (let [m (dijkstra g src-key nil {})]
-    (fn [dest-key]
-      (-> m dest-key :weight))))
-
-(defn batch-shortest-path-hof
-  "Construct a new function per src-key and use this function again and again for each dest-key that have"
-  [g src-key]
-  (let [m (dijkstra g src-key nil {})]
-    (fn [dest-key]
-      (-> m dest-key :path))))
-
-(defn batch-longest-path-hof
-  "Construct a new function per src-key and use this function again and again for each dest-key that have"
-  [g src-key]
-  (let [m (dijkstra g src-key nil {:maximise-weight? true})]
-    (fn [dest-key]
-      (-> m dest-key :path))))
+(defn dijkstra-hof
+  "Constructs a new function closing over a source-vertex, to use over and over for each target-vertex that have,
+  the work only being done at the time of the outer call"
+  [desired-key minimise? g source-vertex]
+  (assert #{:weight :path} "Dijkstra only collects :weight and :path")
+  (let [m (dijkstra g source-vertex nil {:maximise-weight? (not minimise?)})]
+    (fn [target-vertex]
+      (-> m target-vertex desired-key))))
 
 (>defn shortest-path
   "The shortest (least cost/weight/distance) path from src-key to dest-key. Returns a vector of these keys
@@ -112,7 +100,7 @@
   "The greatest distance between v and any other vertex, where distance is the shortest path"
   [g vertex]
   [::gr/graph ::gr/vertex => (? int?)]
-  (let [distance-from-f (batch-lowest-weight-hof g vertex)
+  (let [distance-from-f (dijkstra-hof :weight true g vertex)
         other-vertices (remove #{vertex} (keys g))
         distances (keep distance-from-f other-vertices)]
     (when (-> distances empty? not)

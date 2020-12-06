@@ -16,8 +16,7 @@
     (dev/pp 40 random-graph)
     (dev/log-on "The eccentricity of vertex" first-key "is" eccentricity)
     (dev/log-on "The radius of the graph is" radius)
-    (dev/log-on "The diameter of the graph is" diameter)
-    ))
+    (dev/log-on "The diameter of the graph is" diameter)))
 
 (comment
   (should-be-able-to-write)

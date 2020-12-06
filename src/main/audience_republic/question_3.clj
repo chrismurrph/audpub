@@ -20,8 +20,7 @@
     (dev/pp 40 random-graph)
     (if path
       (dev/log-on "Easiest way to get from" first-key "to" last-key "is via path:" path)
-      (dev/log-on "No possible path from" first-key "to" last-key))
-    ))
+      (dev/log-on "No possible path from" first-key "to" last-key))))
 
 (comment
   (should-be-able-to-write)
