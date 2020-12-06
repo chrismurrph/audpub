@@ -21,10 +21,10 @@
 
 (comment
   (should-be-able-to-write)
-  (metrics/eccentricity example/connected-graph-1 :1)
-  (metrics/radius example/connected-graph-1)
-  (metrics/diameter example/connected-graph-1)
-  (metrics/shortest-path example/connected-graph-1 :1 :12)
-  (metrics/longest-path example/connected-graph-1 :1 :12)
+  (metrics/eccentricity example/connected-graph :1)
+  (metrics/radius example/connected-graph)
+  (metrics/diameter example/connected-graph)
+  (metrics/shortest-path example/connected-graph :1 :12)
+  (metrics/longest-path example/connected-graph :1 :12)
   )
 

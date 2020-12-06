@@ -32,7 +32,7 @@
 
 (deftest extra-edges
   (let [num-extras 3
-        g-before example/connected-graph-1
+        g-before example/connected-graph
         g-after (q2/extra-edges-into-graph g-before num-extras)]
     (is (= (+ num-extras (metrics/edge-count g-before)) (metrics/edge-count g-after)))
     ))
@@ -45,7 +45,7 @@
 
 (deftest fill-a-graph
   (let [num-extras 1
-        g-before (update example/full-graph :1 dissoc :2)
+        g-before (update example/full-graph :2 dissoc :1)
         g-after (q2/extra-edges-into-graph g-before num-extras)]
     (is (= (+ num-extras (metrics/edge-count g-before)) (metrics/edge-count g-after)))))
 
@@ -59,8 +59,8 @@
     (is (= :caught-exception g-after))))
 
 (deftest space-available-nodes
-  (let [g (update example/full-graph :1 dissoc :2)]
-    (is (= (q2/spaces-available-nodes-f g) [:1]))))
+  (let [g example/full-graph]
+    (is (= (q2/spaces-available-nodes-f g) [:1 :3 :4]))))
 
 (comment
   (run-tests)

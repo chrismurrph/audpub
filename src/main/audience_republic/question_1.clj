@@ -25,7 +25,7 @@
             [target [[source weight]]]))
         targets))
 
-(defn merge-entry-value
+(defn merge-grouped-by-entry-value
   "Needed as part of reversing a graph. See usage in test"
   [needs-merged]
   (->> needs-merged
@@ -42,7 +42,7 @@
   (->> graph
        (mapcat reverse-graph-map-entry)
        (group-by first)
-       (map (juxt first merge-entry-value))
+       (map (juxt first merge-grouped-by-entry-value))
        (map (fn [[k v]]
               [k (into {} v)]))
        (into {})))

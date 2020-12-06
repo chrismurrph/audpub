@@ -13,7 +13,7 @@
           [:3 [[:1 2]]]] (q1/reverse-graph-map-entry [:1 [[:2 1] [:3 2]]]))))
 
 (deftest test-join-up-value-part-of-entry
-  (is (= [[:2 4] [:3 2]] (q1/merge-entry-value example/needs-merged))))
+  (is (= [[:2 4] [:3 2]] (q1/merge-grouped-by-entry-value example/grouped-by-graph-map-entry-2))))
 
 (deftest test-reverse-graph
   (is (= {:2 (into {} [[:1 1]])

@@ -39,7 +39,11 @@
     (too-dense? node-count edge-count) :too-dense
     :else :okay))
 
-(defn spaces-available-nodes-f [graph]
+(defn spaces-available-nodes-f
+  "This function is not necessary during running, only used by a test. If needed during running then correct the
+  fault. The fault is that when a node is pointed at by another it loses an available target space because it
+  can't point back. So not all of the nodes returned as being available are actually available"
+  [graph]
   (let [max-targets (-> graph count dec)]
     (->> graph
          (filter (fn [[k v]]
@@ -48,8 +52,11 @@
 
 (>defn extra-edges-into-graph
   "Starting with an already connected graph we add the extra edges, taking care not to clash: a node should
-  target neither itself nor the same node more than once. As part of this we make sure that a node can only
-  arrow to all the nodes! If one source node happens to fill up then it won't receive any more targets."
+  not target:
+  1/ itself
+  2/ the same node more than once
+  3/ a node that is already pointing to it
+  If one source node happens to fill up then it won't receive any more targets."
   [graph num-extra-edges]
   [::gr/graph int? => ::gr/graph]
   (let [all-nodes (-> graph keys set)]
@@ -61,17 +68,24 @@
         (let [source-node (rand-nth spaces-available-nodes)
               existing-targets (-> graph source-node keys)
               avoid (conj (set existing-targets) source-node)
-              candidates (set/difference all-nodes avoid)
-              _ (assert (seq candidates) ["No space for an extra edge in source-node" source-node])
-              new-target (-> candidates seq rand-nth)
-              new-graph (update graph source-node assoc new-target (inc (rand-int 20)))
-              new-spaces-available-nodes (if (= 1 (count candidates))
-                                           (remove #{source-node} spaces-available-nodes)
-                                           spaces-available-nodes)]
-          (recur
-            (dec count-remaining)
-            new-spaces-available-nodes
-            new-graph))))))
+              candidates (->> (set/difference all-nodes avoid)
+                              (remove (fn [candidate]
+                                        (let [points-at (-> graph candidate keys set)]
+                                          (points-at source-node)))))]
+          (if (seq candidates)
+            (let [new-target (-> candidates seq rand-nth)
+                  new-graph (update graph source-node assoc new-target (inc (rand-int 20)))
+                  new-spaces-available-nodes (if (= 1 (count candidates))
+                                               (remove #{source-node} spaces-available-nodes)
+                                               spaces-available-nodes)]
+              (recur
+                (dec count-remaining)
+                new-spaces-available-nodes
+                new-graph))
+            (recur
+              count-remaining
+              (remove #{source-node} spaces-available-nodes)
+              graph)))))))
 
 (>defn edges-into-graph
   "Update the graph with new edges"
@@ -125,5 +139,5 @@
 (def G generate-graph)
 
 (comment
-  (dev/pp (generate-graph 10 45))
+  (dev/pp (generate-graph 4 6))
   )
