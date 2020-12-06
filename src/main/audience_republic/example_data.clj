@@ -41,22 +41,4 @@
 (def unreachable-nodes-graph (flat->graph unreachable-nodes-large-input))
 (def connected-graph-1 (flat->graph large-input))
 
-;;
-;; Apply either of these and it becomes disconnected (according to my wrong definition):
-;; ([:9 :4] [:7 :10] [:8 :5] [:10 :2] [:6 :7] [:2 :9] [:1 :3] [:5 :6] [:4 :1] [:3 :8])
-;; ([:4 :2] [:9 :4] [:1 :3] [:2 :7] [:5 :8] [:10 :6] [:7 :9] [:3 :5] [:6 :10] [:8 :1])
-;; I manually tried the first on paper - why no longer 'connected'?
-;; Because path depends on weights. We really needed a looser definition of 'connected'
-;; No longer doing this check, as don't need, as are doing something crude and simple to make
-;; sure the graphs we generate are connected.
-;;
-(def connected-graph-2 {:10 {:4 6},
-                        :4  {:7 19},
-                        :7  {:1 2 :10 20},
-                        :1  {:8 7},
-                        :8  {:9 9 :5 30},
-                        :9  {:2 2 :4 20},
-                        :2  {:5 13},
-                        :5  {:3 12},
-                        :3  {:6 10},
-                        :6  {}})
+(def needs-merged [:4 [[:4 [[:2 4]]] [:4 [[:3 2]]]]])

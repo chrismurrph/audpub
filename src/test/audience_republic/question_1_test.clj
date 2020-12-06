@@ -1,7 +1,9 @@
 (ns audience-republic.question-1-test
   (:require
     [audience-republic.question-1 :as q1]
-    [clojure.test :refer :all]))
+    [audience-republic.example-data :as example]
+    [clojure.test :refer :all]
+    ))
 
 (deftest test-get-from-data-structure
   (is (= {:2 1 :3 2} (get q1/G :1))))
@@ -11,7 +13,7 @@
           [:3 [[:1 2]]]] (q1/reverse-graph-map-entry [:1 [[:2 1] [:3 2]]]))))
 
 (deftest test-join-up-value-part-of-entry
-  (is (= [[:2 4] [:3 2]] (q1/merge-entry-value q1/needs-merged))))
+  (is (= [[:2 4] [:3 2]] (q1/merge-entry-value example/needs-merged))))
 
 (deftest test-reverse-graph
   (is (= {:2 (into {} [[:1 1]])

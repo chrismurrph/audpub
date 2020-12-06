@@ -6,8 +6,7 @@
     [audience-republic.metrics :as metrics]
     [au.com.seasoft.general.dev :as dev]
     [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
-    [clojure.test :refer :all])
-  )
+    ))
 
 (defn view-unreachable-nodes-graph []
   (dev/pp 30 example/unreachable-nodes-graph))
@@ -16,14 +15,14 @@
   (dev/pp 30 example/connected-graph-1))
 
 (defn run-example-dijkstra []
-  (metrics/dijkstra example/unreachable-nodes-graph :1))
+  (dev/pp (metrics/dijkstra example/unreachable-nodes-graph :1)))
 
 (defn should-be-able-to-write []
   (let [random-graph (question-2/G 10 10)
         first-key (-> random-graph keys rand-nth)
         last-key (-> random-graph keys rand-nth)
         path (metrics/D random-graph first-key last-key)]
-    (dev/pp random-graph)
+    (dev/pp 40 random-graph)
     (if path
       (dev/log-on "Easiest way to get from" first-key "to" last-key "is via path:" path)
       (dev/log-on "No possible path from" first-key "to" last-key))

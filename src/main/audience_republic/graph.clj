@@ -9,9 +9,14 @@
 (s/def ::vertex keyword?)
 
 ;;
+;; The cost/penalty/distance for going from one vertex to another
+;;
+(s/def ::weight int?)
+
+;;
 ;; Arrows between the nodes are edges
 ;;
-(s/def ::edge (s/tuple ::vertex ::vertex))
+(s/def ::edge (s/tuple ::vertex ::weight ::vertex))
 (s/def ::edges (s/coll-of ::edge))
 
 ;;
@@ -19,11 +24,6 @@
 ;; a target, even if just potentially
 ;;
 (s/def ::pair (s/tuple (s/nilable ::vertex) (s/nilable ::vertex)))
-
-;;
-;; The cost/penalty/distance for going from one vertex to another
-;;
-(s/def ::weight int?)
 
 ;;
 ;; If a traversal across an edge goes against the edge's direction we record a false. Thus with no information

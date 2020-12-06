@@ -3,9 +3,9 @@
   (:require
     [audience-republic.example-data :as example]
     [audience-republic.metrics :as metrics]
-    [clojure.test :refer :all]
     [audience-republic.question-2 :as question-2]
-    [au.com.seasoft.general.dev :as dev]))
+    [au.com.seasoft.general.dev :as dev]
+    ))
 
 (defn should-be-able-to-write []
   (let [random-graph (question-2/G 10 10)
