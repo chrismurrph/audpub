@@ -146,10 +146,4 @@
     0
     g))
 
-(>defn node-count
-  "Count of the number of vertices on a graph"
-  [g]
-  [::gr/graph => int?]
-  (-> g keys count))
-
 (def D shortest-path)

@@ -7,6 +7,7 @@
 ;; A node on a graph
 ;;
 (s/def ::vertex keyword?)
+(s/def ::vertices (s/coll-of ::vertex))
 
 ;;
 ;; The cost/penalty/distance for going from one vertex to another
@@ -64,8 +65,6 @@
 ;; If can't generate a graph then a failure is returned, which contains the reason.
 ;;
 (s/def ::failure-or-graph (s/or :failure ::failure :graph ::graph))
-
-(s/def ::vertices (s/coll-of ::vertex))
 
 ;;
 ;; Important is a list, because we take from the beginning

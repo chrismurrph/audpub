@@ -39,25 +39,38 @@
     (too-dense? node-count edge-count) :too-dense
     :else :okay))
 
-(defn extra-edges-into-graph
+(defn spaces-available-nodes-f [graph]
+  (let [max-targets (-> graph count dec)]
+    (->> graph
+         (filter (fn [[k v]]
+                   (< (-> v count) max-targets)))
+         keys)))
+
+(>defn extra-edges-into-graph
   "Starting with an already connected graph we add the extra edges, taking care not to clash: a node should
-  target neither itself nor the same node more than once"
-  [nodes weights graph num-extra-edges]
-  (let [all-nodes (set nodes)]
+  target neither itself nor the same node more than once. As part of this we make sure that a node can only
+  arrow to all the nodes! If one source node happens to fill up then it won't receive any more targets."
+  [graph num-extra-edges]
+  [::gr/graph int? => ::gr/graph]
+  (let [all-nodes (-> graph keys set)]
     (loop [count-remaining num-extra-edges
-           [weight & next-weights] weights
+           spaces-available-nodes (spaces-available-nodes-f graph)
            graph graph]
       (if (zero? count-remaining)
         graph
-        (let [source-node (rand-nth nodes)
+        (let [source-node (rand-nth spaces-available-nodes)
               existing-targets (-> graph source-node keys)
               avoid (conj (set existing-targets) source-node)
               candidates (set/difference all-nodes avoid)
+              _ (assert (seq candidates) ["No space for an extra edge in source-node" source-node])
               new-target (-> candidates seq rand-nth)
-              new-graph (update graph source-node assoc new-target weight)]
+              new-graph (update graph source-node assoc new-target (inc (rand-int 20)))
+              new-spaces-available-nodes (if (= 1 (count candidates))
+                                           (remove #{source-node} spaces-available-nodes)
+                                           spaces-available-nodes)]
           (recur
             (dec count-remaining)
-            next-weights
+            new-spaces-available-nodes
             new-graph))))))
 
 (>defn edges-into-graph
@@ -73,14 +86,12 @@
 (>defn produce-edges
   "Create edges, forming a long 'line' joining all the nodes together. It is one line but it sometimes
   changes direction (using util/changing-booleans), giving us a more interesting graph. Most important
-  is 'one line', meaning no islands. There will be unreachable nodes"
-  [nodes weights]
-  [::gr/shuffled-vertices coll? => ::gr/edges]
-  (let [xs nodes
-        arrows (util/changing-booleans (count nodes))
-        [target new-xs] ((juxt peek pop) xs)]
+  is 'one line', meaning no islands. There *will* likely be unreachable nodes"
+  [nodes]
+  [::gr/shuffled-vertices => ::gr/edges]
+  (let [arrows (util/changing-booleans (count nodes))
+        [target new-xs] ((juxt peek pop) nodes)]
     (loop [xs new-xs
-           [new-weight & next-weights] weights
            arrows arrows
            result []
            last-target target]
@@ -88,10 +99,11 @@
         result
         (let [[target remaining-xs] ((juxt peek pop) xs)
               [arrow? remaining-arrows] ((juxt peek pop) arrows)
+              new-weight (inc (rand-int 20))
               new-edge (if arrow?
                          [last-target new-weight target]
                          [target new-weight last-target])]
-          (recur remaining-xs next-weights remaining-arrows (conj result new-edge) target))))))
+          (recur remaining-xs remaining-arrows (conj result new-edge) target))))))
 
 (>defn generate-graph
   "Create a connected graph, with the number of nodes and edges requested. Will return a failure map
@@ -102,17 +114,16 @@
     (if (= :okay verdict)
       (let [starting-graph (create-no-edges-graph node-count)
             nodes (keys starting-graph)
-            weights (repeatedly #(inc (rand-int 20)))
-            edges (produce-edges (into '() nodes) weights)
+            edges (produce-edges (into '() nodes))
             filled-graph (edges-into-graph edges starting-graph)
             num-extra-edges-required (inc (- edge-count node-count))]
         (if (pos? num-extra-edges-required)
-          (extra-edges-into-graph nodes weights filled-graph num-extra-edges-required)
+          (extra-edges-into-graph filled-graph num-extra-edges-required)
           filled-graph))
       ((verdict->msg-f verdict) node-count edge-count))))
 
 (def G generate-graph)
 
 (comment
-  (dev/pp (generate-graph 20 25))
+  (dev/pp (generate-graph 10 45))
   )

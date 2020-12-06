@@ -26,17 +26,41 @@
 
 (deftest large-graph
   (let [g (q2/generate-graph 1000 1010)]
-    (is (= 1000 (metrics/node-count g)))
+    (is (= 1000 (count g)))
     (is (= 1010 (metrics/edge-count g)))
     ))
 
 (deftest extra-edges
   (let [num-extras 3
         g-before example/connected-graph-1
-        weights (repeatedly #(inc (rand-int 20)))
-        g-after (q2/extra-edges-into-graph (keys g-before) weights g-before num-extras)]
-    (is (= (+ 3 (metrics/edge-count g-before)) (metrics/edge-count g-after)))
+        g-after (q2/extra-edges-into-graph g-before num-extras)]
+    (is (= (+ num-extras (metrics/edge-count g-before)) (metrics/edge-count g-after)))
     ))
+
+(deftest dont-overfill-a-source
+  (let [repeat-count 100
+        edge-counts (->> (repeatedly #(metrics/edge-count (q2/generate-graph 10 45)))
+                         (take repeat-count))]
+    (is (= (repeat repeat-count 45) edge-counts))))
+
+(deftest fill-a-graph
+  (let [num-extras 1
+        g-before (update example/full-graph :1 dissoc :2)
+        g-after (q2/extra-edges-into-graph g-before num-extras)]
+    (is (= (+ num-extras (metrics/edge-count g-before)) (metrics/edge-count g-after)))))
+
+;; Testing same thing as dont-overfill-a-source, just more precisely
+(deftest overfill-a-graph
+  (let [num-extras 1
+        g-before example/full-graph
+        g-after (try
+                  (q2/extra-edges-into-graph g-before num-extras)
+                  (catch Throwable th :caught-exception))]
+    (is (= :caught-exception g-after))))
+
+(deftest space-available-nodes
+  (let [g (update example/full-graph :1 dissoc :2)]
+    (is (= (q2/spaces-available-nodes-f g) [:1]))))
 
 (comment
   (run-tests)
