@@ -23,7 +23,7 @@
                   :message   (str "Too sparse because there are only " edge-count " edges for " node-count " nodes. Edge count can't be less than one less than the node count")})
    :too-dense  (fn [node-count edge-count]
                  {:fail-type :too-dense
-                  :message   (str "Too dense because there are " edge-count " (many) edges to cover only " node-count " nodes")})})
+                  :message   (str "Too dense because there are " edge-count " (many) edges to cover only " node-count " nodes. Max edges is N(N-1)/2")})})
 
 (defn too-dense?
   "Are too many edges for the number of nodes, according to the formula N(N-1)/2"
@@ -39,13 +39,31 @@
     (too-dense? node-count edge-count) :too-dense
     :else :okay))
 
+(defn remove-nodes-that-arrow-to
+  "A node that already points at source-node can't be made one of its targets,
+  as there are no two-way streets allowed. So that lessens by 1 the possible
+  number of targets that source-node has. But here we are hanging up the boots
+  of source-node, saying it hasn't got any spaces left to any nodes. The fact
+  that what I'm doing works only makes sense if there are now no candidates.
+  Ha - that's (empty? candidates). So if it points to source and
+  it is the last candidate left then, then it really is time to close
+  the doors. We fill more and never un-fill, so can permanently close the door.
+  All other possible targets are already targets of source-node - we know
+  that when (empty? candidates) happens. In fact this whole discussion is
+  only about (empty? candidates) happening."
+  [source-node graph candidates]
+  (remove (fn [candidate]
+            (let [points-at (-> graph candidate keys set)]
+              (points-at source-node)))
+          candidates))
+
 (>defn extra-edges-into-graph
   "Starting with an already connected graph we add the extra edges, taking care not to clash: a node should
   not target:
   1/ itself
   2/ the same node more than once
   3/ a node that is already pointing to it
-  If one source node happens to fill up then it won't receive any more targets."
+  Once a source node has filled up then it won't be available to receive more targets."
   [graph spaces-available-nodes num-extra-edges]
   [::gr/graph ::gr/vertices int? => ::gr/graph]
   (let [all-nodes (-> graph keys set)]
@@ -58,20 +76,12 @@
               existing-targets (-> graph source-node keys)
               avoid (conj (set existing-targets) source-node)
               candidates (->> (set/difference all-nodes avoid)
-                              (remove (fn [candidate]
-                                        ;; A node that already points at source-node can't be made one of its targets,
-                                        ;; as there are no two-way streets allowed. So that lessens by 1 the possible
-                                        ;; number of targets that source-node has. But here we are hanging up the boots
-                                        ;; of source-node, saying it hasn't got any spaces left to any nodes. The fact
-                                        ;; that what I'm doing works only makes sense if there are now no candidates.
-                                        ;; Ha - that's other side of (seq candidates). So if it points to source and
-                                        ;; it is the last candidate left then, then it really is time to close
-                                        ;; the doors. We fill more and never un-fill, so can permanently close the door.
-                                        ;; All other possible targets are targets - we know that b/c we have crept to
-                                        ;; the end.
-                                        (let [points-at (-> graph candidate keys set)]
-                                          (points-at source-node)))))]
-          (if (seq candidates)
+                              (remove-nodes-that-arrow-to source-node graph))]
+          (if (empty? candidates)
+            (recur
+              count-remaining
+              (remove #{source-node} spaces-available-nodes)
+              graph)
             (let [new-target (-> candidates seq rand-nth)
                   new-graph (update graph source-node assoc new-target (inc (rand-int 20)))
                   new-spaces-available-nodes (if (= 1 (count candidates))
@@ -80,11 +90,7 @@
               (recur
                 (dec count-remaining)
                 new-spaces-available-nodes
-                new-graph))
-            (recur
-              count-remaining
-              (remove #{source-node} spaces-available-nodes)
-              graph)))))))
+                new-graph))))))))
 
 (>defn edges-into-graph
   "Update the graph with new edges"
