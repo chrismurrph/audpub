@@ -4,7 +4,8 @@
     [audience-republic.metrics :as metrics]
     [audience-republic.example-data :as example]
     [clojure.test :refer :all]
-    ))
+    [audience-republic.question-1 :as q1]
+    [au.com.seasoft.general.dev :as dev]))
 
 (deftest not-enough-edges
   (is (= :too-sparse (:fail-type (q2/generate-graph 10 8)))))
@@ -30,22 +31,33 @@
     (is (= 1010 (metrics/edge-count g)))
     ))
 
-(defn spaces-available-nodes-f
-  "This function is not necessary during running, only used by a test. If needed during running then correct the
-  fault. The fault is that when a node is pointed at by another it loses an available target space because it
-  can't point back. So not all of the nodes returned as being available are actually available. For instance one
-  might have all the others pointing at it - then it would not be available."
+(defn full-up-node-hof?
+  "(N-1) is maximum number of edges for any node. Checks if a node in a graph has reached this maximum"
+  [g]
+  (let [graph-size (-> g keys count)
+        reversed-g (q1/reverse-graph g)]
+    (fn [node]
+      (let [pointers-at-node (-> reversed-g node keys)
+            node-points-at (-> g node keys)
+            arrows (concat pointers-at-node node-points-at)]
+        (= (- graph-size 1) (count arrows))))))
+
+(defn open-nodes-f
+  "This function is not necessary during running, only used by a test. Every node can have a maximum of N-1 arrows.
+  Returns the nodes on a graph that can still accept one or more arrows, the 'open' nodes. The number of edges that
+  the graph can accept will be the count of what is returned here minus one"
   [graph]
-  (let [max-targets (-> graph count dec)]
-    (->> graph
-         (filter (fn [[k v]]
-                   (< (-> v count) max-targets)))
-         keys)))
+  (let [nodes (keys graph)
+        spaces-available-f? (complement (full-up-node-hof? graph))]
+    (filter spaces-available-f? nodes)))
+
+(defn full-up-graph? [g]
+  (-> g open-nodes-f empty?))
 
 (deftest extra-edges
   (let [num-extras 3
         g-before example/connected-graph
-        spaces-available-nodes (spaces-available-nodes-f g-before)
+        spaces-available-nodes (open-nodes-f g-before)
         g-after (q2/extra-edges-into-graph g-before spaces-available-nodes num-extras)]
     (is (= (+ num-extras (metrics/edge-count g-before)) (metrics/edge-count g-after)))
     ))
@@ -59,22 +71,31 @@
 (deftest fill-a-graph
   (let [num-extras 1
         g-before (update example/full-graph :2 dissoc :1)
-        spaces-available-nodes (spaces-available-nodes-f g-before)
+        spaces-available-nodes (open-nodes-f g-before)
         g-after (q2/extra-edges-into-graph g-before spaces-available-nodes num-extras)]
     (is (= (+ num-extras (metrics/edge-count g-before)) (metrics/edge-count g-after)))))
+
+(deftest capacity-for-one-edge
+  (let [g (update example/full-graph :2 dissoc :1)
+        spaces-available-nodes (-> g open-nodes-f set)]
+    (is (= spaces-available-nodes #{:1 :2}))))
 
 ;; Testing same thing as dont-overfill-a-source, just more precisely
 (deftest overfill-a-graph
   (let [num-extras 1
         g-before example/full-graph
         g-after (try
-                  (q2/extra-edges-into-graph g-before (spaces-available-nodes-f g-before) num-extras)
+                  (q2/extra-edges-into-graph g-before (open-nodes-f g-before) num-extras)
                   (catch Throwable th :caught-exception))]
     (is (= :caught-exception g-after))))
 
 (deftest space-available-nodes
   (let [g example/full-graph]
-    (is (= (spaces-available-nodes-f g) [:1 :3 :4]))))
+    (is (empty? (open-nodes-f g)))))
+
+(deftest full-graph-is-full
+  (let [g example/full-graph]
+    (is (full-up-graph? g))))
 
 (comment
   (run-tests)
