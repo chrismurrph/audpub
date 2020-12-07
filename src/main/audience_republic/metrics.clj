@@ -38,7 +38,7 @@
   "Given a starting point returns details about every node in the graph. Details include the least
   accumulated weight to get there as well as the path taken. If specify an end-node then the details
   just for it are returned. If maximise-weight? is specified then the greatest accumulated weight to get
-  there is reported. Think of wanting to accumulate gold along the joins rather than using up fuel by
+  there is discovered. Think of wanting to accumulate gold along the joins rather than using up fuel by
   riding to the destination"
   ([g start-node end-node {:keys [maximise-weight?] :as options}]
    [::gr/graph ::gr/vertex (? ::gr/vertex) map? => map?]

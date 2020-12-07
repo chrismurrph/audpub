@@ -39,17 +39,6 @@
     (too-dense? node-count edge-count) :too-dense
     :else :okay))
 
-(defn spaces-available-nodes-f
-  "This function is not necessary during running, only used by a test. If needed during running then correct the
-  fault. The fault is that when a node is pointed at by another it loses an available target space because it
-  can't point back. So not all of the nodes returned as being available are actually available"
-  [graph]
-  (let [max-targets (-> graph count dec)]
-    (->> graph
-         (filter (fn [[k v]]
-                   (< (-> v count) max-targets)))
-         keys)))
-
 (>defn extra-edges-into-graph
   "Starting with an already connected graph we add the extra edges, taking care not to clash: a node should
   not target:
@@ -57,11 +46,11 @@
   2/ the same node more than once
   3/ a node that is already pointing to it
   If one source node happens to fill up then it won't receive any more targets."
-  [graph num-extra-edges]
-  [::gr/graph int? => ::gr/graph]
+  [graph spaces-available-nodes num-extra-edges]
+  [::gr/graph ::gr/vertices int? => ::gr/graph]
   (let [all-nodes (-> graph keys set)]
     (loop [count-remaining num-extra-edges
-           spaces-available-nodes (spaces-available-nodes-f graph)
+           spaces-available-nodes spaces-available-nodes
            graph graph]
       (if (zero? count-remaining)
         graph
@@ -70,6 +59,16 @@
               avoid (conj (set existing-targets) source-node)
               candidates (->> (set/difference all-nodes avoid)
                               (remove (fn [candidate]
+                                        ;; A node that already points at source-node can't be made one of its targets,
+                                        ;; as there are no two-way streets allowed. So that lessens by 1 the possible
+                                        ;; number of targets that source-node has. But here we are hanging up the boots
+                                        ;; of source-node, saying it hasn't got any spaces left to any nodes. The fact
+                                        ;; that what I'm doing works only makes sense if there are now no candidates.
+                                        ;; Ha - that's other side of (seq candidates). So if it points to source and
+                                        ;; it is the last candidate left then, then it really is time to close
+                                        ;; the doors. We fill more and never un-fill, so can permanently close the door.
+                                        ;; All other possible targets are targets - we know that b/c we have crept to
+                                        ;; the end.
                                         (let [points-at (-> graph candidate keys set)]
                                           (points-at source-node)))))]
           (if (seq candidates)
@@ -132,12 +131,12 @@
             filled-graph (edges-into-graph edges starting-graph)
             num-extra-edges-required (inc (- edge-count node-count))]
         (if (pos? num-extra-edges-required)
-          (extra-edges-into-graph filled-graph num-extra-edges-required)
+          (extra-edges-into-graph filled-graph nodes num-extra-edges-required)
           filled-graph))
       ((verdict->msg-f verdict) node-count edge-count))))
 
 (def G generate-graph)
 
 (comment
-  (dev/pp (generate-graph 4 6))
+  (dev/pp (generate-graph 20 191))
   )

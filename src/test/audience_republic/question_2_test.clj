@@ -30,10 +30,23 @@
     (is (= 1010 (metrics/edge-count g)))
     ))
 
+(defn spaces-available-nodes-f
+  "This function is not necessary during running, only used by a test. If needed during running then correct the
+  fault. The fault is that when a node is pointed at by another it loses an available target space because it
+  can't point back. So not all of the nodes returned as being available are actually available. For instance one
+  might have all the others pointing at it - then it would not be available."
+  [graph]
+  (let [max-targets (-> graph count dec)]
+    (->> graph
+         (filter (fn [[k v]]
+                   (< (-> v count) max-targets)))
+         keys)))
+
 (deftest extra-edges
   (let [num-extras 3
         g-before example/connected-graph
-        g-after (q2/extra-edges-into-graph g-before num-extras)]
+        spaces-available-nodes (spaces-available-nodes-f g-before)
+        g-after (q2/extra-edges-into-graph g-before spaces-available-nodes num-extras)]
     (is (= (+ num-extras (metrics/edge-count g-before)) (metrics/edge-count g-after)))
     ))
 
@@ -46,7 +59,8 @@
 (deftest fill-a-graph
   (let [num-extras 1
         g-before (update example/full-graph :2 dissoc :1)
-        g-after (q2/extra-edges-into-graph g-before num-extras)]
+        spaces-available-nodes (spaces-available-nodes-f g-before)
+        g-after (q2/extra-edges-into-graph g-before spaces-available-nodes num-extras)]
     (is (= (+ num-extras (metrics/edge-count g-before)) (metrics/edge-count g-after)))))
 
 ;; Testing same thing as dont-overfill-a-source, just more precisely
@@ -54,13 +68,13 @@
   (let [num-extras 1
         g-before example/full-graph
         g-after (try
-                  (q2/extra-edges-into-graph g-before num-extras)
+                  (q2/extra-edges-into-graph g-before (spaces-available-nodes-f g-before) num-extras)
                   (catch Throwable th :caught-exception))]
     (is (= :caught-exception g-after))))
 
 (deftest space-available-nodes
   (let [g example/full-graph]
-    (is (= (q2/spaces-available-nodes-f g) [:1 :3 :4]))))
+    (is (= (spaces-available-nodes-f g) [:1 :3 :4]))))
 
 (comment
   (run-tests)
