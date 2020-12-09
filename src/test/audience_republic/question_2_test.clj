@@ -40,7 +40,7 @@
       (let [pointers-at-node (-> reversed-g node keys)
             node-points-at (-> g node keys)
             arrows (concat pointers-at-node node-points-at)]
-        (= (- graph-size 1) (count arrows))))))
+        (= (dec graph-size) (count arrows))))))
 
 (defn open-nodes-f
   "This function is not necessary during running, only used by a test. Every node can have a maximum of N-1 arrows.

@@ -40,17 +40,8 @@
     :else :okay))
 
 (defn remove-nodes-that-arrow-to
-  "A node that already points at source-node can't be made one of its targets,
-  as there are no two-way streets allowed. So that lessens by 1 the possible
-  number of targets that source-node has. But here we are hanging up the boots
-  of source-node, saying it hasn't got any spaces left to any nodes. The fact
-  that what I'm doing works only makes sense if there are now no candidates.
-  Ha - that's (empty? candidates). So if it points to source and
-  it is the last candidate left then, then it really is time to close
-  the doors. We fill more and never un-fill, so can permanently close the door.
-  All other possible targets are already targets of source-node - we know
-  that when (empty? candidates) happens. In fact this whole discussion is
-  only about (empty? candidates) happening."
+  "A candidate that already points at source-node can't be made one of its targets,
+  as there are no two-way streets allowed. So it is just as invalid a candidate as an existing target"
   [source-node graph candidates]
   (remove (fn [candidate]
             (let [points-at (-> graph candidate keys set)]
@@ -61,9 +52,9 @@
   "Starting with an already connected graph we add the extra edges, taking care not to clash: a node should
   not target:
   1/ itself
-  2/ the same node more than once
+  2/ the same target node more than once
   3/ a node that is already pointing to it
-  Once a source node has filled up then it won't be available to receive more targets."
+  Once a source node has 'filled up' from one of these 3 places then it won't be available to receive more targets."
   [graph spaces-available-nodes num-extra-edges]
   [::gr/graph ::gr/vertices int? => ::gr/graph]
   (let [all-nodes (-> graph keys set)]

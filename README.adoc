@@ -47,8 +47,8 @@ unreachable nodes.
 Generation of this kind of graph can be achieved
 by drawing a 'line' through all the nodes, but with individual edges/arrows pointing in different directions.
 Once `N-1` edges have been created in this way we have a connected but maximally sparse graph.
-Next any extra edges need to be added. We no longer need to worry about the graph being connected:
-that can't be un-done by what follows. As we now add edges we make sure to avoid clashes.
+Next any extra edges need to be added. We no longer need to worry about the graph not being connected:
+that can't be un-done by what follows. As we now add edges we make sure to avoid potential clashes.
 
 .Clash definition rules:
 - a node targeting itself
