@@ -3,10 +3,15 @@
     [clojure.pprint :refer [pprint]]
     [clojure.stacktrace :as st]
     [clojure.tools.namespace.repl :as tools-ns :refer [set-refresh-dirs]]
-    [clojure.spec.alpha :as s]))
+    [clojure.spec.alpha :as s]
+    [au.com.seasoft.general.dev :as dev]))
 
-(set! *warn-on-reflection* true)
-(set! *unchecked-math* :warn-on-boxed)
+(comment
+  "reveal has some of this"
+  (set! *warn-on-reflection* true))
+(comment
+  "reveal has a lot of this"
+  (set! *unchecked-math* :warn-on-boxed))
 (s/check-asserts true)
 
 ;; The refer is not seen
@@ -20,3 +25,13 @@
 
 (defn refresh-all [& args]
   (tools-ns/refresh-all))
+
+;; You should have a key binding that sends a snippet to the REPL
+(comment
+  ;; first snippet
+  (do
+    (require 'vlaaad.reveal)
+    (add-tap (vlaaad.reveal/ui)))
+  ;; second snippet
+  (tap> {:fx/type :web-view
+         :url     "http://www.seasoft.com.au"}))

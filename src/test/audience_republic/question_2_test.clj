@@ -4,8 +4,7 @@
     [audience-republic.metrics :as metrics]
     [audience-republic.example-data :as example]
     [clojure.test :refer :all]
-    [audience-republic.question-1 :as q1]
-    [au.com.seasoft.general.dev :as dev]))
+    [audience-republic.graph :as gr]))
 
 (deftest not-enough-edges
   (is (= :too-sparse (:fail-type (q2/generate-graph 10 8)))))
@@ -35,7 +34,7 @@
   "(N-1) is maximum number of edges for any node. Checks if a node in a graph has reached this maximum"
   [g]
   (let [graph-size (-> g keys count)
-        reversed-g (q1/reverse-graph g)]
+        reversed-g (gr/reverse-graph g)]
     (fn [node]
       (let [pointers-at-node (-> reversed-g node keys)
             node-points-at (-> g node keys)

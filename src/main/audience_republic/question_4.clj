@@ -8,7 +8,7 @@
     ))
 
 (defn should-be-able-to-write []
-  (let [random-graph (question-2/G 10 10)
+  (let [random-graph (question-2/generate-graph 10 10)
         first-key (-> random-graph keys rand-nth)
         eccentricity (metrics/eccentricity random-graph first-key)
         radius (metrics/radius random-graph)

@@ -13,7 +13,7 @@
   (dev/pp (metrics/dijkstra example/unreachable-nodes-graph :1)))
 
 (defn should-be-able-to-write []
-  (let [random-graph (question-2/G 10 10)
+  (let [random-graph (question-2/generate-graph 10 10)
         first-key (-> random-graph keys rand-nth)
         last-key (-> random-graph keys rand-nth)
         path (metrics/D random-graph first-key last-key)]

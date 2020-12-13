@@ -1,6 +1,7 @@
 (ns audience-republic.graph
-  "Clojure specs used by graph orientated functions"
+  "Clojure specs used by graph orientated functions, as well as graph orientated functions that are not metrics"
   (:require
+    [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
     [clojure.spec.alpha :as s]))
 
 ;;
@@ -70,3 +71,37 @@
 ;; Important is a list, because we take from the beginning
 ;;
 (s/def ::shuffled-vertices (s/coll-of ::vertex :kind list))
+
+(defn reverse-graph-map-entry
+  "one->many map-entries so mapcat against it. Note that these tuples cannot be used to create a map as
+  there will be duplicate keys. Will need to group-by and merge-entry-value before `into {}`"
+  [[source targets]]
+  (assert ((some-fn vector? map?) targets) ["v s/be a vector of tuples or a map" source targets])
+  (mapv (fn [tuple]
+          (assert (= 2 (count tuple)) ["S/be target and weight" tuple])
+          (let [[target weight] tuple]
+            [target [[source weight]]]))
+        targets))
+
+(defn merge-grouped-by-entry-value
+  "Needed as part of reversing a graph. See usage in test"
+  [needs-merged]
+  (->> needs-merged
+       second
+       (map second)
+       (mapcat identity)
+       vec))
+
+(>defn reverse-graph
+       "Changes the direction of the arrows, in terms of the drawing of a graph that the data structure represents.
+       Used for being able to find a weight between two vertices across the wrong (target -> source) direction"
+       [graph]
+       [::graph => ::graph]
+       (->> graph
+            (mapcat reverse-graph-map-entry)
+            (group-by first)
+            (map (juxt first merge-grouped-by-entry-value))
+            (map (fn [[k v]]
+                   [k (into {} v)]))
+            (into {})))
+

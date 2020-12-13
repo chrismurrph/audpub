@@ -132,8 +132,6 @@
           filled-graph))
       ((verdict->msg-f verdict) node-count edge-count))))
 
-(def G generate-graph)
-
 (comment
   (dev/pp (generate-graph 20 191))
   )

@@ -6,47 +6,6 @@
     )
   (:import (clojure.lang PersistentQueue)))
 
-(def G
-  "Canonical form now using. Easier to update and order of the target nodes is not important so using a map
-  represents that fact better. It is a ::gr/graph"
-  {:1 (into {} [[:2 1] [:3 2]])
-   :2 (into {} [[:4 4]])
-   :3 (into {} [[:4 2]])
-   :4 (into {} [])})
-
-(defn reverse-graph-map-entry
-  "one->many map-entries so mapcat against it. Note that these tuples cannot be used to create a map as
-  there will be duplicate keys. Will need to group-by and merge-entry-value before `into {}`"
-  [[source targets]]
-  (assert ((some-fn vector? map?) targets) ["v s/be a vector of tuples or a map" source targets])
-  (mapv (fn [tuple]
-          (assert (= 2 (count tuple)) ["S/be target and weight" tuple])
-          (let [[target weight] tuple]
-            [target [[source weight]]]))
-        targets))
-
-(defn merge-grouped-by-entry-value
-  "Needed as part of reversing a graph. See usage in test"
-  [needs-merged]
-  (->> needs-merged
-       second
-       (map second)
-       (mapcat identity)
-       vec))
-
-(>defn reverse-graph
-  "Changes the direction of the arrows, in terms of the drawing of a graph that the data structure represents.
-  Used for being able to find a weight between two vertices across the wrong (target -> source) direction"
-  [graph]
-  [::gr/graph => ::gr/graph]
-  (->> graph
-       (mapcat reverse-graph-map-entry)
-       (group-by first)
-       (map (juxt first merge-grouped-by-entry-value))
-       (map (fn [[k v]]
-              [k (into {} v)]))
-       (into {})))
-
 (>defn pair->weight
   "Given two nodes (alias vertices), if they are connected and there is a weight then return that weight,
   otherwise nil. The [source-vertex target-vertex] pair needs to be connected in the right direction to produce a
@@ -81,7 +40,7 @@
   [g s]
   [::gr/graph ::gr/vertex => ::gr/graph-traversal]
   (let [first-node [s]
-        reversed-graph (reverse-graph g)]
+        reversed-graph (gr/reverse-graph g)]
     (loop [last-vertex nil
            ongoing-traversal []
            explored-vertices #{(first first-node)}
@@ -105,7 +64,7 @@
   Sometimes the traversal order goes against the 'weight arrows'. The returned data structure incorporates this fact"
   [d]
   (fn [g s]
-    (let [reversed-graph (reverse-graph g)]
+    (let [reversed-graph (gr/reverse-graph g)]
       (next ((fn rec-seq [last-vertex explored-vertices frontier]
                (lazy-seq
                  (when (seq frontier)
