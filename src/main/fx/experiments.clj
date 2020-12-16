@@ -2,7 +2,8 @@
   (:require
     [cljfx.api :as fx]
     [audience-republic.example-data :as example]
-    [au.com.seasoft.general.dev :as dev])
+    [au.com.seasoft.general.dev :as dev]
+    [audience-republic.graph :as gr])
   (:import [javafx.scene.paint Color]))
 
 (defn vertex-view->index-number [{:keys [children] :as vertex-view}]
@@ -97,10 +98,18 @@
     (->> (vertex-view 10 1 [10 10])
          (vertex-view->targets g))))
 
-(defn layout-singles-graph-hof [g {:keys [horizontal-spacing] :as options}]
-  (let [reverse-g g]
+(defn targets-count [g node]
+  (let [res (-> g node keys count)]
+    (dev/log-on "reverse count" node res)
+    res))
+
+(defn layout-graph-hof [g {:keys [singles-only? horizontal-spacing] :as options}]
+  (let [reverse-g (gr/reverse-graph g)
+        reverse-count-f (if singles-only?
+                          (partial targets-count reverse-g)
+                          (constantly 1))]
     (fn inner [start-point targets at-origin?]
-      (dev/log-on "start-point targets" start-point targets)
+      (dev/log-off "start-point targets" start-point targets)
       (let [distribute-from-a-point (distribute-from-a-point-hof start-point (assoc options :at-origin? at-origin?))
             vertex-and-edge-views (->> targets
                                        (map kw->number)
@@ -109,17 +118,18 @@
             recurse-vertex-views (into []
                                        (mapcat (fn [vertex-view]
                                                  (let [start-point (vertex-view->start-point horizontal-spacing vertex-view)
-                                                       targets (vertex-view->targets g vertex-view)]
-                                                   (inner start-point targets false)))
+                                                       targets (vertex-view->targets g vertex-view)
+                                                       single-targets (filter #(= 1 (reverse-count-f %)) targets)]
+                                                   (inner start-point single-targets false)))
                                                (remove edge-view? vertex-and-edge-views)))]
         (into vertex-and-edge-views recurse-vertex-views)))))
 
 (defn x-3 []
   (let [g example/simple-graph
         start-point [10 50]
-        options {:radius 10 :horizontal-spacing 30 :vertical-spacing 40}
-        layout-singles-graph (layout-singles-graph-hof g options)
+        options {:radius 10 :horizontal-spacing 30 :vertical-spacing 40 :singles-only? false}
+        layout-graph (layout-graph-hof g options)
         nodes (keys g)
         source-node (first nodes)
         ]
-    (see-something (pane-of-vertices-and-edges (layout-singles-graph start-point [source-node] true)))))
+    (see-something (pane-of-vertices-and-edges (layout-graph start-point [source-node] true)))))

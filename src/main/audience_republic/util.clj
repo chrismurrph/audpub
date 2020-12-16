@@ -18,6 +18,25 @@
             left-n
             (concat boolean-sequence next-sequence)))))))
 
+(defmacro swap!->
+  "A useful macro for threading multiple operations together on an atom (e.g. state atom in mutation)
+
+  Equivalent to:
+  ```
+  (swap! atom (fn [s] (-> s ...forms...)))
+  ```
+
+  For example
+
+  ```
+  (swap!-> (:state env)
+    (merge/merge-component ...)
+    (integrate-ident* ...))
+  ```
+  "
+  [atom & forms]
+  `(swap! ~atom (fn [s#] (-> s# ~@forms))))
+
 (comment
   (changing-booleans 30))
 

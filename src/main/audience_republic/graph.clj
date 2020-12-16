@@ -2,7 +2,8 @@
   "Clojure specs used by graph orientated functions, as well as graph orientated functions that are not metrics"
   (:require
     [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
-    [clojure.spec.alpha :as s]))
+    [clojure.spec.alpha :as s]
+    [audience-republic.example-data :as example]))
 
 ;;
 ;; A node on a graph
@@ -93,15 +94,58 @@
        vec))
 
 (>defn reverse-graph
-       "Changes the direction of the arrows, in terms of the drawing of a graph that the data structure represents.
-       Used for being able to find a weight between two vertices across the wrong (target -> source) direction"
-       [graph]
-       [::graph => ::graph]
-       (->> graph
-            (mapcat reverse-graph-map-entry)
-            (group-by first)
-            (map (juxt first merge-grouped-by-entry-value))
-            (map (fn [[k v]]
-                   [k (into {} v)]))
-            (into {})))
+  "Changes the direction of the arrows, in terms of the drawing of a graph that the data structure represents.
+  Used for being able to find a weight between two vertices across the wrong (target -> source) direction"
+  [graph]
+  [::graph => ::graph]
+  (->> graph
+       (mapcat reverse-graph-map-entry)
+       (group-by first)
+       (map (juxt first merge-grouped-by-entry-value))
+       (map (fn [[k v]]
+              [k (into {} v)]))
+       (into {})))
+
+(>defn nodes
+  [g]
+  [::graph => (s/coll-of ::vertex :kind set)]
+  (-> g keys set))
+
+(>defn traversable-nodes
+  [g node]
+  [::graph ::vertex => (s/coll-of ::vertex)]
+  (assert g ["No graph in traversable-nodes of" node])
+  (or (-> g node keys) []))
+
+(defn traversable-edges [g node]
+  (->> (traversable-nodes g node)
+       (map (fn [neighbour]
+              [node neighbour]))
+       set))
+
+(>defn non-traversable-nodes
+  [reversed-g node]
+  [::graph ::vertex => (s/coll-of ::vertex)]
+  (or (-> reversed-g node keys) []))
+
+(defn adjacent-nodes
+  [g reversed-g node]
+  [::graph ::graph ::vertex => (s/coll-of ::vertex)]
+  (concat (traversable-nodes g node) (non-traversable-nodes reversed-g node)))
+
+(defn adjacent-edges
+  [g reversed-g node]
+  [::graph ::graph ::vertex => (s/coll-of ::edge :kind set)]
+  (-> (concat (->> (traversable-nodes g node)
+                   (map (fn [neighbour]
+                          [node neighbour])))
+              (->> (non-traversable-nodes reversed-g node)
+                   (map (fn [neighbour]
+                          [neighbour node]))))
+      set))
+
+(defn x-1 []
+  (let [g example/simple-graph
+        r (reverse-graph g)]
+    (adjacent-edges g r :4)))
 
