@@ -113,11 +113,11 @@
 
 (>defn traversable-nodes
   [g node]
-  [::graph ::vertex => (s/coll-of ::vertex)]
+  [::graph ::vertex => (s/coll-of ::vertex :kind set)]
   (assert g ["No graph in traversable-nodes of" node])
-  (or (-> g node keys) []))
+  (set (or (-> g node keys) #{})))
 
-(defn traversable-edges [g node]
+#_(defn traversable-edges [g node]
   (->> (traversable-nodes g node)
        (map (fn [neighbour]
               [node neighbour]))
@@ -125,13 +125,13 @@
 
 (>defn non-traversable-nodes
   [reversed-g node]
-  [::graph ::vertex => (s/coll-of ::vertex)]
-  (or (-> reversed-g node keys) []))
+  [::graph ::vertex => (s/coll-of ::vertex :kind set)]
+  (set (or (-> reversed-g node keys) #{})))
 
 (defn adjacent-nodes
   [g reversed-g node]
-  [::graph ::graph ::vertex => (s/coll-of ::vertex)]
-  (concat (traversable-nodes g node) (non-traversable-nodes reversed-g node)))
+  [::graph ::graph ::vertex => (s/coll-of ::vertex :kind set)]
+  (set (concat (traversable-nodes g node) (non-traversable-nodes reversed-g node))))
 
 (defn adjacent-edges
   [g reversed-g node]

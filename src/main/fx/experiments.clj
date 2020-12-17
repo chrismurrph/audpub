@@ -3,7 +3,8 @@
     [cljfx.api :as fx]
     [audience-republic.example-data :as example]
     [au.com.seasoft.general.dev :as dev]
-    [audience-republic.graph :as gr])
+    [audience-republic.graph :as gr]
+    [audience-republic.util :as util])
   (:import [javafx.scene.paint Color]))
 
 (defn vertex-view->index-number [{:keys [children] :as vertex-view}]
@@ -51,9 +52,6 @@
                           (edge-view? view) -1
                           (vertex-view? view) 1))
                       children)})
-
-(defn kw->number [kw]
-  (-> kw name Long/parseLong))
 
 (defn see-something [something]
   (fx/on-fx-thread
@@ -112,7 +110,7 @@
       (dev/log-off "start-point targets" start-point targets)
       (let [distribute-from-a-point (distribute-from-a-point-hof start-point (assoc options :at-origin? at-origin?))
             vertex-and-edge-views (->> targets
-                                       (map kw->number)
+                                       (map util/kw->number)
                                        sort
                                        distribute-from-a-point)
             recurse-vertex-views (into []

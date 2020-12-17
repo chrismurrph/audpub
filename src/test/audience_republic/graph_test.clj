@@ -20,6 +20,35 @@
 (deftest test-reverse-graph-back-again
   (is (= (dissoc example/simple-graph :4) (-> example/simple-graph gr/reverse-graph gr/reverse-graph))))
 
+(deftest test-adjacent-nodes
+  (let [g example/unreachable-nodes-graph
+        reversed-g (gr/reverse-graph g)]
+    (is (= #{:11 :10 :8} (gr/adjacent-nodes g reversed-g :9)))))
+
+(deftest test-adjacent-edges
+  (let [g example/unreachable-nodes-graph
+        reversed-g (gr/reverse-graph g)]
+    (is (= #{[:9 :11] [:9 :10] [:8 :9]} (gr/adjacent-edges g reversed-g :9)))))
+
+
+(deftest test-non-traversable-nodes-1
+  (let [g example/unreachable-nodes-graph
+        reversed-g (gr/reverse-graph g)]
+    (is (= #{:11 :10} (gr/non-traversable-nodes reversed-g :12)))))
+
+(deftest test-non-traversable-nodes-2
+  (let [g example/unreachable-nodes-graph
+        reversed-g (gr/reverse-graph g)]
+    (is (= #{:8} (gr/non-traversable-nodes reversed-g :9)))))
+
+(deftest test-traversable-nodes-1
+  (let [g example/unreachable-nodes-graph]
+    (is (= #{} (gr/traversable-nodes g :12)))))
+
+(deftest test-traversable-nodes-2
+  (let [g example/unreachable-nodes-graph]
+    (is (= #{:3} (gr/traversable-nodes g :1)))))
+
 (comment
   (run-tests)
   )

@@ -37,6 +37,9 @@
   [atom & forms]
   `(swap! ~atom (fn [s#] (-> s# ~@forms))))
 
+(defn kw->number [kw]
+  (-> kw name Long/parseLong))
+
 (comment
   (changing-booleans 30))
 
