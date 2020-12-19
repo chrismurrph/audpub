@@ -14,7 +14,8 @@
 (defn vertex-view->start-point [horizontal-space {:keys [layout-x layout-y] :as vertex-view}]
   [(+ horizontal-space layout-x) layout-y])
 
-(defn vertex-view [radius index [x y :as point]]
+(defn vertex-view
+  [radius index [x y :as point]]
   {:fx/type  :stack-pane
    :layout-x x
    :layout-y y

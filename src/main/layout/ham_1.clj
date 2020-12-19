@@ -1,4 +1,4 @@
-(ns layout.ham
+(ns layout.ham-1
   (:require
     [audience-republic.graph :as gr]
     [layout.math :as m]

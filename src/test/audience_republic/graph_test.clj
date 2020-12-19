@@ -30,17 +30,6 @@
         reversed-g (gr/reverse-graph g)]
     (is (= #{[:9 :11] [:9 :10] [:8 :9]} (gr/adjacent-edges g reversed-g :9)))))
 
-
-(deftest test-non-traversable-nodes-1
-  (let [g example/unreachable-nodes-graph
-        reversed-g (gr/reverse-graph g)]
-    (is (= #{:11 :10} (gr/non-traversable-nodes reversed-g :12)))))
-
-(deftest test-non-traversable-nodes-2
-  (let [g example/unreachable-nodes-graph
-        reversed-g (gr/reverse-graph g)]
-    (is (= #{:8} (gr/non-traversable-nodes reversed-g :9)))))
-
 (deftest test-traversable-nodes-1
   (let [g example/unreachable-nodes-graph]
     (is (= #{} (gr/traversable-nodes g :12)))))
@@ -48,6 +37,22 @@
 (deftest test-traversable-nodes-2
   (let [g example/unreachable-nodes-graph]
     (is (= #{:3} (gr/traversable-nodes g :1)))))
+
+(deftest test-pair-edges
+  (let [g example/simple-graph]
+    (= #{[:1 :3] [:2 :4] [:3 :4] [:1 :2]} (gr/pair-edges g))))
+
+;; Not used so not worth testing
+(deftest test-non-traversable-nodes-1
+  (let [g example/unreachable-nodes-graph
+        reversed-g (gr/reverse-graph g)]
+    (is (= #{:11 :10} (gr/non-traversable-nodes reversed-g :12)))))
+
+;; Not used so not worth testing
+(deftest test-non-traversable-nodes-2
+  (let [g example/unreachable-nodes-graph
+        reversed-g (gr/reverse-graph g)]
+    (is (= #{:8} (gr/non-traversable-nodes reversed-g :9)))))
 
 (comment
   (run-tests)

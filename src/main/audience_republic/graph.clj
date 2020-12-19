@@ -1,9 +1,10 @@
 (ns audience-republic.graph
   "Clojure specs used by graph orientated functions, as well as graph orientated functions that are not metrics"
   (:require
+    [audience-republic.example-data :as example]
     [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
     [clojure.spec.alpha :as s]
-    [audience-republic.example-data :as example]))
+    ))
 
 ;;
 ;; A node on a graph
@@ -111,6 +112,18 @@
   [::graph => (s/coll-of ::vertex :kind set)]
   (-> g keys set))
 
+(>defn pair-edges
+  "All the edges on a graph, without weight"
+  [g]
+  [::graph => (s/coll-of ::pair :kind set)]
+  (reduce
+    (fn [acc [source-node v]]
+      (into acc (map (fn [target-node]
+                       [source-node target-node])
+                     (keys v))))
+    #{}
+    g))
+
 (>defn traversable-nodes
   [g node]
   [::graph ::vertex => (s/coll-of ::vertex :kind set)]
@@ -143,9 +156,3 @@
                    (map (fn [neighbour]
                           [neighbour node]))))
       set))
-
-(defn x-1 []
-  (let [g example/simple-graph
-        r (reverse-graph g)]
-    (adjacent-edges g r :4)))
-
