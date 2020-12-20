@@ -9,8 +9,7 @@
     [layout.math :as m])
   (:import [javafx.scene.paint Color]))
 
-(def default-radius 10)
-(def arrowhead-base 4)
+(def arrowhead-base 5)
 
 (defn vertex-view->index-number
   "The thing on the screen can be identified by a number"
@@ -20,7 +19,7 @@
 
 (defn vertex-view
   [index [x y :as point] {:keys [radius fill-colour stroke-colour]
-                          :or   {radius default-radius fill-colour Color/ORCHID stroke-colour :black}}]
+                          :or   {radius ham/default-radius fill-colour Color/ORCHID stroke-colour :black}}]
   {:fx/type  :stack-pane
    :layout-x x
    :layout-y y
@@ -45,13 +44,15 @@
   ([coords]
    (->vertex-views coords {})))
 
-(defn upright-triangle [[x y :as central-point]]
-  (let [triangle-x-radius 5
-        triangle-y-radius 7
-        ;; If central point was [5 7] we would want no transform at all
+(defn edge-view-arrow [[x y :as central-point] rotate-by-degrees]
+  (let [triangle-x-radius 4
+        triangle-y-radius 5
+        ;; If central point was [5 7] we would want no 'transform' at all. We are moving a triangle that's in the
+        ;; top left corner to the central point.
         transform-x (- x triangle-x-radius)
         transform-y (- y triangle-y-radius)]
     {:fx/type  :group
+     :rotate   rotate-by-degrees
      :children [{:fx/type :polygon
                  :points  [(+ transform-x triangle-x-radius)
                            (+ transform-y 0)
@@ -62,7 +63,7 @@
 
 (defn arrow-position
   "Given an edge, returns where to put the arrow"
-  [[from-x from-y :as from] [to-x to-y :as to] {:keys [radius] :or {radius default-radius}}]
+  [[from-x from-y :as from] [to-x to-y :as to] {:keys [radius] :or {radius ham/default-radius}}]
   (let [x-delta (- to-x from-x)
         y-delta (- to-y from-y)
         length (m/sqrt (+ (m/pow x-delta 2) (m/pow y-delta 2)))
@@ -79,7 +80,7 @@
 
 (defn triangle-view [[from-x from-y :as from] [to-x to-y :as to] options]
   (-> (arrow-position from to options)
-      upright-triangle))
+      (edge-view-arrow (+ 90 (m/line-slope from to)))))
 
 (defn edge-view [[from-x from-y :as from] [to-x to-y :as to] options]
   (dev/log-off "edge from, to" from to)
@@ -95,7 +96,7 @@
 (defn ->edge-views
   "Get all the edges from the graph. Then replace the 2 nodes of each with [x y]. Then have enough for an edge-view if
   alter for the radius"
-  ([graph coords {:keys [radius] :or {radius default-radius} :as options}]
+  ([graph coords {:keys [radius] :or {radius ham/default-radius} :as options}]
    (->> (gr/pair-edges graph)
         (map (fn [[source target]]
                [(get coords source) (get coords target)]))
@@ -107,7 +108,7 @@
 (defn ->arrow-views
   "Get all the edges from the graph. Then replace the 2 nodes of each with [x y]. Then have enough for an triangle-view if
   alter for the radius"
-  ([graph coords {:keys [radius] :or {radius default-radius} :as options}]
+  ([graph coords {:keys [radius] :or {radius ham/default-radius} :as options}]
    (->> (gr/pair-edges graph)
         (map (fn [[source target]]
                [(get coords source) (get coords target)]))
@@ -146,7 +147,7 @@
                :points  [80 40 50 30 50 90]}]})
 
 (defn x-3 []
-  (let [g example/unreachable-nodes-graph
+  (let [g example/connected-graph
         coords (ham/graph->coords g)
         view-vertices (->vertex-views coords)
         view-edges (->edge-views g coords)
@@ -158,4 +159,4 @@
     ))
 
 (defn x-4 []
-  (see-something (upright-triangle [20 50])))
+  (see-something (edge-view-arrow [20 50] 90)))

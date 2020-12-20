@@ -27,3 +27,14 @@
 (defn copy-sign [^double n ^double m]
   (Math/copySign n m))
 
+(defn radians->degrees [radian]
+  (* radian (/ 180 Math/PI)))
+
+(defn atan2 [^double n ^double m]
+  (Math/atan2 n m))
+
+(defn line-slope [[xa ya] [xb yb]]
+  (let [[x y :as origin-based] [(- xb xa) (- yb ya)]
+        radians-polar-angle (atan2 y x)]
+    (radians->degrees radians-polar-angle)))
+

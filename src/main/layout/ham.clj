@@ -13,6 +13,8 @@
     [com.syncleus.dann.math Vector]
     (java.util Map)))
 
+(def default-radius 10)
+
 (defn node->interop-node [node]
   (InteropNode. (util/kw->number node)))
 
@@ -53,20 +55,26 @@
     {}
     (.entrySet interop-coords)))
 
-(defn scale-coords [coords shift magnify]
-  (->> coords
-       (map (fn [[k v]]
-              (let [[x y] v
-                    new-x (* (+ x shift) magnify)
-                    new-y (* (+ y shift) magnify)]
-                [k [new-x new-y]])))
-       (into {})))
+(defn scale-coords
+  "Shift has to be 10 to always get the whole graph into the +ive quadrant. There might be an x or a y of -10.
+  Just going off what HyperassociativeMap returns. To get it bang in the top left corner we will need to find the top-most and left most nodes.
+  Apply a margin after that."
+  [coords radius magnify]
+  (let [shift 10]
+    (->> coords
+         (map (fn [[k v]]
+                (let [[x y] v
+                      new-x (+ radius (* (+ x shift) magnify))
+                      new-y (+ radius (* (+ y shift) magnify))]
+                  [k [new-x new-y]])))
+         (into {}))))
 
-(defn- -graph->coords [{:keys [alignment-attempts silent? shift magnify]
-                        :or {alignment-attempts 200
-                             silent? true
-                             shift 10
-                             magnify 20}} g]
+(defn- -graph->coords
+  [{:keys [alignment-attempts silent? radius magnify]
+    :or   {alignment-attempts 200
+           silent?            true
+           radius             default-radius
+           magnify            20}} g]
   (let [interop-graph (graph->interop-graph g)
         interop-ham-1 (InteropHAM/create interop-graph 2)
         interop-ham-2 (InteropHAM/attemptToAlign interop-ham-1 alignment-attempts silent?)
@@ -74,11 +82,11 @@
     (when aligned?
       (-> (.getCoordinates interop-ham-2)
           interop-coords->coords
-          (scale-coords shift magnify)))))
+          (scale-coords radius magnify)))))
 
 (>defn graph->coords
-  ([options g]
-   [map? ::gr/graph => any?]
+  ([g options]
+   [::gr/graph map? => any?]
    (let [n 20
          cs (conj (repeatedly n chan) (timeout 500))]
      (doseq [c cs]
@@ -88,7 +96,7 @@
        v)))
   ([g]
    [::gr/graph => any?]
-   (graph->coords {} g)))
+   (graph->coords g {})))
 
 (defn x-1 []
   (let [g example/unreachable-nodes-graph
