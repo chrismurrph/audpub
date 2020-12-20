@@ -1,23 +1,18 @@
-(ns fx.experiments
+(ns fx.discarding.experiments
+  "Attempting to layout the graph by myself to get an appreciation of how difficult the job is"
   (:require
-    [audience-republic.example-data :as example]
-    [layout.ham :as ham]
-    [audience-republic.graph :as gr]
-    [audience-republic.util :as util]
-    [au.com.seasoft.general.dev :as dev]
     [cljfx.api :as fx]
-    )
+    [audience-republic.example-data :as example]
+    [au.com.seasoft.general.dev :as dev]
+    [audience-republic.graph :as gr]
+    [audience-republic.util :as util])
   (:import [javafx.scene.paint Color]))
 
-(defn vertex-view->index-number
-  "The thing on the screen can be identified by a number"
-  [{:keys [children] :as vertex-view}]
+(defn vertex-view->index-number [{:keys [children] :as vertex-view}]
   (let [{:keys [text] :as label-child} (first (filter (comp #{:label} :fx/type) children))]
     (Long/parseLong text)))
 
-(defn vertex-view->start-point
-  ""
-  [horizontal-space {:keys [layout-x layout-y] :as vertex-view}]
+(defn vertex-view->start-point [horizontal-space {:keys [layout-x layout-y] :as vertex-view}]
   [(+ horizontal-space layout-x) layout-y])
 
 (defn vertex-view
@@ -36,38 +31,13 @@
   (-> (vertex-view 10 3 [10 10])
       vertex-view->index-number))
 
-(defn ->vertex-views
-  ([coords {:keys [radius] :or {radius 10}}]
-   (->> coords
-        (map (fn [[k v]]
-               (let [[x y] v
-                     view (vertex-view radius (util/kw->number k) [x y])]
-                 view)))))
-  ([coords]
-   (->vertex-views coords {})))
-
 (defn edge-view [[from-x from-y :as from] [to-x to-y :as to]]
-  (dev/log-off "edge from, to" from to)
+  (dev/log-on "edge from, to" from to)
   {:fx/type  :path
    :elements [{:fx/type :move-to
                :x       from-x :y from-y}
               {:fx/type :line-to
                :x       to-x :y to-y}]})
-
-(defn shift-point [amount [x y]]
-  [(+ amount x) (+ amount y)])
-
-(defn ->edge-views
-  "Get all the edges from the graph. Then replace the 2 nodes of each with [x y]. Then have enough for an edge-view if
-  alter for the radius"
-  ([graph coords {:keys [radius] :or {radius 10}}]
-   (->> (gr/pair-edges graph)
-        (map (fn [[source target]]
-               [(get coords source) (get coords target)]))
-        (map (fn [[from to]]
-               (edge-view (shift-point radius from) (shift-point radius to))))))
-  ([graph coords]
-   (->edge-views graph coords {})))
 
 (defn edge-view? [{:fx/keys [type]}]
   (= :path type))
@@ -155,12 +125,11 @@
         (into vertex-and-edge-views recurse-vertex-views)))))
 
 (defn x-3 []
-  (let [g example/unreachable-nodes-graph
-        coords (ham/graph->coords g)
-        view-vertices (->vertex-views coords)
-        view-edges (->edge-views g coords)
-        widgets (concat view-vertices view-edges)
+  (let [g example/simple-graph
+        start-point [10 50]
+        options {:radius 10 :horizontal-spacing 30 :vertical-spacing 40 :singles-only? false}
+        layout-graph (layout-graph-hof g options)
+        nodes (keys g)
+        source-node (first nodes)
         ]
-    (dev/pp coords)
-    (see-something (pane-of-vertices-and-edges widgets))
-    ))
+    (see-something (pane-of-vertices-and-edges (layout-graph start-point [source-node] true)))))

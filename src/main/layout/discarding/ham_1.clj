@@ -1,4 +1,5 @@
-(ns layout.ham-1
+(ns layout.discarding.ham-1
+  "Straight translation from Java code that didn't work out, see bottom of this file"
   (:require
     [audience-republic.graph :as gr]
     [layout.math :as m]

@@ -1,4 +1,6 @@
-(ns layout.ham-2
+(ns layout.discarding.ham-2
+  "Taking the straight translation (ham-1) that didn't work out, and making it more functional to see if I could understand it better that way.
+  Also a failure. The in-place updates were too difficult for me to follow."
   (:require
     [audience-republic.graph :as gr]
     [layout.math :as m]
