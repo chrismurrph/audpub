@@ -6,8 +6,11 @@
     [audience-republic.util :as util]
     [au.com.seasoft.general.dev :as dev]
     [cljfx.api :as fx]
-    )
+    [layout.math :as m])
   (:import [javafx.scene.paint Color]))
+
+(def default-radius 10)
+(def arrowhead-base 4)
 
 (defn vertex-view->index-number
   "The thing on the screen can be identified by a number"
@@ -15,19 +18,15 @@
   (let [{:keys [text] :as label-child} (first (filter (comp #{:label} :fx/type) children))]
     (Long/parseLong text)))
 
-(defn vertex-view->start-point
-  ""
-  [horizontal-space {:keys [layout-x layout-y] :as vertex-view}]
-  [(+ horizontal-space layout-x) layout-y])
-
 (defn vertex-view
-  [radius index [x y :as point]]
+  [index [x y :as point] {:keys [radius fill-colour stroke-colour]
+                          :or   {radius default-radius fill-colour Color/ORCHID stroke-colour :black}}]
   {:fx/type  :stack-pane
    :layout-x x
    :layout-y y
    :children [{:fx/type :circle
-               :fill    Color/ORCHID
-               :stroke  :black
+               :fill    fill-colour
+               :stroke  stroke-colour
                :radius  radius}
               {:fx/type :label
                :text    (str index)}]})
@@ -37,16 +36,52 @@
       vertex-view->index-number))
 
 (defn ->vertex-views
-  ([coords {:keys [radius] :or {radius 10}}]
+  ([coords options]
    (->> coords
         (map (fn [[k v]]
                (let [[x y] v
-                     view (vertex-view radius (util/kw->number k) [x y])]
+                     view (vertex-view (util/kw->number k) [x y] options)]
                  view)))))
   ([coords]
    (->vertex-views coords {})))
 
-(defn edge-view [[from-x from-y :as from] [to-x to-y :as to]]
+(defn upright-triangle [[x y :as central-point]]
+  (let [triangle-x-radius 5
+        triangle-y-radius 7
+        ;; If central point was [5 7] we would want no transform at all
+        transform-x (- x triangle-x-radius)
+        transform-y (- y triangle-y-radius)]
+    {:fx/type  :group
+     :children [{:fx/type :polygon
+                 :points  [(+ transform-x triangle-x-radius)
+                           (+ transform-y 0)
+                           (+ transform-x 0)
+                           (+ transform-y (* triangle-y-radius 2))
+                           (+ transform-x (* triangle-x-radius 2))
+                           (+ transform-y (* triangle-y-radius 2))]}]}))
+
+(defn arrow-position
+  "Given an edge, returns where to put the arrow"
+  [[from-x from-y :as from] [to-x to-y :as to] {:keys [radius] :or {radius default-radius}}]
+  (let [x-delta (- to-x from-x)
+        y-delta (- to-y from-y)
+        length (m/sqrt (+ (m/pow x-delta 2) (m/pow y-delta 2)))
+        up-to-arrow-point (- length (+ arrowhead-base radius))
+        proportion (/ up-to-arrow-point length)
+        up-to-x-delta (* proportion x-delta)
+        up-to-y-delta (* proportion y-delta)
+        ]
+    (dev/log-off "proportion of length" proportion)
+    [(+ from-x up-to-x-delta) (+ from-y up-to-y-delta)]))
+
+(defn x-4 []
+  (arrow-position [0 0] [50 50] {:radius 10}))
+
+(defn triangle-view [[from-x from-y :as from] [to-x to-y :as to] options]
+  (-> (arrow-position from to options)
+      upright-triangle))
+
+(defn edge-view [[from-x from-y :as from] [to-x to-y :as to] options]
   (dev/log-off "edge from, to" from to)
   {:fx/type  :path
    :elements [{:fx/type :move-to
@@ -60,14 +95,26 @@
 (defn ->edge-views
   "Get all the edges from the graph. Then replace the 2 nodes of each with [x y]. Then have enough for an edge-view if
   alter for the radius"
-  ([graph coords {:keys [radius] :or {radius 10}}]
+  ([graph coords {:keys [radius] :or {radius default-radius} :as options}]
    (->> (gr/pair-edges graph)
         (map (fn [[source target]]
                [(get coords source) (get coords target)]))
         (map (fn [[from to]]
-               (edge-view (shift-point radius from) (shift-point radius to))))))
+               (edge-view (shift-point radius from) (shift-point radius to) options)))))
   ([graph coords]
    (->edge-views graph coords {})))
+
+(defn ->arrow-views
+  "Get all the edges from the graph. Then replace the 2 nodes of each with [x y]. Then have enough for an triangle-view if
+  alter for the radius"
+  ([graph coords {:keys [radius] :or {radius default-radius} :as options}]
+   (->> (gr/pair-edges graph)
+        (map (fn [[source target]]
+               [(get coords source) (get coords target)]))
+        (map (fn [[from to]]
+               (triangle-view (shift-point radius from) (shift-point radius to) options)))))
+  ([graph coords]
+   (->arrow-views graph coords {})))
 
 (defn edge-view? [{:fx/keys [type]}]
   (= :path type))
@@ -93,74 +140,22 @@
        :scene   {:fx/type :scene
                  :root    something}})))
 
-(defn distribute-from-a-point-hof
-  "Draw them going down. Returns a vector of edge-views and vertex-views. Can be made to be creeping leftward if
-  set right-to-left? true. It is basically a fan that can be used recursively"
-  [[x about-y :as middle-point] {:keys [radius horizontal-spacing vertical-spacing at-origin?]}]
-  (let [x-origin (- x horizontal-spacing)]
-    (fn [vertex-numbers]
-      (let [num-nodes (count vertex-numbers)
-            slightly-down-by (if (even? num-nodes)
-                               (quot vertical-spacing 2)
-                               0)
-            ;; start-y is top place we are going to pepper them down from
-            start-y (+ slightly-down-by
-                       (- about-y (* (quot num-nodes 2) vertical-spacing)))
-            edge-views (if at-origin?
-                         []
-                         (->> vertex-numbers
-                              (map-indexed (fn [idx _]
-                                             (let [y (+ radius start-y (* idx vertical-spacing))]
-                                               (edge-view [(+ radius x-origin) (+ radius about-y)]
-                                                          [(+ radius x) y]))))))
-            vertex-views (->> vertex-numbers
-                              (map-indexed (fn [idx num]
-                                             (vertex-view radius num [x (+ start-y (* idx vertical-spacing))]))))]
-        (concat edge-views vertex-views)))))
-
-(defn vertex-view->targets [g vertex-view]
-  (let [index (vertex-view->index-number vertex-view)]
-    (assert (int? index) ["No index" vertex-view])
-    (-> index str keyword dev/probe-off g keys)))
-
-(defn x-2 []
-  (let [g example/simple-graph]
-    (->> (vertex-view 10 1 [10 10])
-         (vertex-view->targets g))))
-
-(defn targets-count [g node]
-  (let [res (-> g node keys count)]
-    (dev/log-on "reverse count" node res)
-    res))
-
-(defn layout-graph-hof [g {:keys [singles-only? horizontal-spacing] :as options}]
-  (let [reverse-g (gr/reverse-graph g)
-        reverse-count-f (if singles-only?
-                          (partial targets-count reverse-g)
-                          (constantly 1))]
-    (fn inner [start-point targets at-origin?]
-      (dev/log-off "start-point targets" start-point targets)
-      (let [distribute-from-a-point (distribute-from-a-point-hof start-point (assoc options :at-origin? at-origin?))
-            vertex-and-edge-views (->> targets
-                                       (map util/kw->number)
-                                       sort
-                                       distribute-from-a-point)
-            recurse-vertex-views (into []
-                                       (mapcat (fn [vertex-view]
-                                                 (let [start-point (vertex-view->start-point horizontal-spacing vertex-view)
-                                                       targets (vertex-view->targets g vertex-view)
-                                                       single-targets (filter #(= 1 (reverse-count-f %)) targets)]
-                                                   (inner start-point single-targets false)))
-                                               (remove edge-view? vertex-and-edge-views)))]
-        (into vertex-and-edge-views recurse-vertex-views)))))
+(defn example-triangle []
+  {:fx/type  :group
+   :children [{:fx/type :polygon
+               :points  [80 40 50 30 50 90]}]})
 
 (defn x-3 []
   (let [g example/unreachable-nodes-graph
         coords (ham/graph->coords g)
         view-vertices (->vertex-views coords)
         view-edges (->edge-views g coords)
-        widgets (concat view-vertices view-edges)
+        view-arrows (->arrow-views g coords)
+        widgets (concat view-vertices view-edges view-arrows)
         ]
     (dev/pp coords)
     (see-something (pane-of-vertices-and-edges widgets))
     ))
+
+(defn x-4 []
+  (see-something (upright-triangle [20 50])))
