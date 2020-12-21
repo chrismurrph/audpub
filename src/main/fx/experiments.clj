@@ -141,22 +141,30 @@
        :scene   {:fx/type :scene
                  :root    something}})))
 
-(defn example-triangle []
+(def example-triangle
   {:fx/type  :group
    :children [{:fx/type :polygon
                :points  [80 40 50 30 50 90]}]})
 
+(def error-message
+  {:fx/type  :group
+   :children [{:fx/type :polygon
+               :points  [80 40 50 30 50 90]}]})
+
+(defn show-graph [g]
+  (let [coords (ham/graph->coords g)]
+    (if coords
+      (let [view-vertices (->vertex-views coords)
+            view-edges (->edge-views g coords)
+            view-arrows (->arrow-views g coords)
+            widgets (concat view-vertices view-edges view-arrows)]
+        (dev/pp coords)
+        (see-something (pane-of-vertices-and-edges widgets)))
+      (see-something error-message))))
+
 (defn x-3 []
-  (let [g example/connected-graph
-        coords (ham/graph->coords g)
-        view-vertices (->vertex-views coords)
-        view-edges (->edge-views g coords)
-        view-arrows (->arrow-views g coords)
-        widgets (concat view-vertices view-edges view-arrows)
-        ]
-    (dev/pp coords)
-    (see-something (pane-of-vertices-and-edges widgets))
-    ))
+  (let [g example/connected-graph]
+    (show-graph g)))
 
 (defn x-4 []
   (see-something (edge-view-arrow [20 50] 90)))
