@@ -4,7 +4,7 @@
     [clojure.stacktrace :as st]
     [clojure.tools.namespace.repl :as tools-ns :refer [set-refresh-dirs]]
     [clojure.spec.alpha :as s]
-    [au.com.seasoft.general.dev :as dev]))
+    [reveal.e03-chess-server-popups]))
 
 (comment
   "reveal has some of this"
@@ -28,10 +28,16 @@
 
 ;; You should have a key binding that sends a snippet to the REPL
 (comment
-  ;; first snippet
+  ;; first snippet, will bring up the Reveal window
   (do
     (require 'vlaaad.reveal)
     (add-tap (vlaaad.reveal/ui)))
   ;; second snippet
   (tap> {:fx/type :web-view
-         :url     "http://www.seasoft.com.au"}))
+         :url     "http://www.seasoft.com.au"})
+  (tap> {:a 1})
+  (tap> {:apples  10
+         :oranges 20})
+  (tap> (all-ns))
+  (tap> (ns-interns 'clojure.core))
+  (tap> (the-ns 'cljfx.api)))

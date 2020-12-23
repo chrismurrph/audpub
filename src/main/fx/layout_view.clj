@@ -1,10 +1,8 @@
-(ns fx.experiments
+(ns fx.layout-view
   (:require
-    [audience-republic.example-data :as example]
     [layout.ham :as ham]
     [audience-republic.graph :as gr]
     [audience-republic.util :as util]
-    [au.com.seasoft.general.dev :as dev]
     [cljfx.api :as fx]
     [layout.math :as m])
   (:import [javafx.scene.paint Color]))
@@ -72,7 +70,6 @@
         up-to-x-delta (* proportion x-delta)
         up-to-y-delta (* proportion y-delta)
         ]
-    (dev/log-off "proportion of length" proportion)
     [(+ from-x up-to-x-delta) (+ from-y up-to-y-delta)]))
 
 (defn x-4 []
@@ -83,7 +80,6 @@
       (edge-view-arrow (+ 90 (m/line-slope from to)))))
 
 (defn edge-view [[from-x from-y :as from] [to-x to-y :as to] options]
-  (dev/log-off "edge from, to" from to)
   {:fx/type  :path
    :elements [{:fx/type :move-to
                :x       from-x :y from-y}
@@ -136,20 +132,18 @@
 (defn see-something [something]
   (fx/on-fx-thread
     (fx/create-component
-      {:fx/type :stage
-       :showing true
-       :scene   {:fx/type :scene
-                 :root    something}})))
-
-(def example-triangle
-  {:fx/type  :group
-   :children [{:fx/type :polygon
-               :points  [80 40 50 30 50 90]}]})
+      {:fx/type    :stage
+       :min-height 400
+       :min-width  600
+       :showing    true
+       :scene      {:fx/type :scene
+                    :root    something}})))
 
 (def error-message
-  {:fx/type  :group
-   :children [{:fx/type :polygon
-               :points  [80 40 50 30 50 90]}]})
+  {:fx/type  :stack-pane
+   :children [{:fx/type :label
+               :text    "Was not able to quickly create a nicely aligned graph"
+               :style   {:-fx-font-weight :bold}}]})
 
 (defn show-graph [g]
   (let [coords (ham/graph->coords g)]
@@ -158,13 +152,9 @@
             view-edges (->edge-views g coords)
             view-arrows (->arrow-views g coords)
             widgets (concat view-vertices view-edges view-arrows)]
-        (dev/pp coords)
+        (tap> coords)
         (see-something (pane-of-vertices-and-edges widgets)))
       (see-something error-message))))
-
-(defn x-3 []
-  (let [g example/connected-graph]
-    (show-graph g)))
 
 (defn x-4 []
   (see-something (edge-view-arrow [20 50] 90)))

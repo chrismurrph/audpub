@@ -5,8 +5,7 @@
     [audience-republic.util :as util]
     [au.com.seasoft.general.dev :as dev]
     [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
-    [clojure.spec.alpha :as s]
-    [clojure.core.async :as async :refer [<!! <! >! close! chan go go-loop alts!! timeout]]
+    [clojure.core.async :as async :refer [>! chan go alts!! timeout]]
     )
   (:import
     [au.com.seasoft.ham GenericGraph InteropNode InteropEdge InteropHAM]

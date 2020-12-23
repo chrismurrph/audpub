@@ -11,6 +11,10 @@
     [clojure.test :refer :all]
     ))
 
+;;
+;; Before delete just make sure everything 'works'. Never really deleting when in version control.
+;;
+
 (def DEFAULT_MAX_MOVEMENT 0.0)
 (def DEFAULT_TOTAL_MOVEMENT 0.0)
 (def EQUILIBRIUM_ALIGNMENT_FACTOR 0.005)

@@ -8,6 +8,10 @@
     [audience-republic.util :as util])
   (:import [javafx.scene.paint Color]))
 
+;;
+;; Before delete just make sure everything 'works'. Never really deleting when in version control.
+;;
+
 (defn vertex-view->index-number [{:keys [children] :as vertex-view}]
   (let [{:keys [text] :as label-child} (first (filter (comp #{:label} :fx/type) children))]
     (Long/parseLong text)))
@@ -109,7 +113,7 @@
                           (partial targets-count reverse-g)
                           (constantly 1))]
     (fn inner [start-point targets at-origin?]
-      (dev/log-off "start-point targets" start-point targets)
+      (tap> {"start-point" start-point "targets" targets})
       (let [distribute-from-a-point (distribute-from-a-point-hof start-point (assoc options :at-origin? at-origin?))
             vertex-and-edge-views (->> targets
                                        (map util/kw->number)
