@@ -5,7 +5,7 @@
     [audience-republic.util :as util]
     [au.com.seasoft.general.dev :as dev]
     [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
-    [clojure.core.async :as async :refer [>! chan go alts!! timeout]]
+    [clojure.core.async :as async :refer [>! chan go go-loop alts!! timeout]]
     )
   (:import
     [au.com.seasoft.ham GenericGraph InteropNode InteropEdge InteropHAM]
@@ -89,14 +89,14 @@
 
 (defn- -graph->coords
   [{:keys [alignment-attempts silent?]
-    :or   {alignment-attempts 200
+    :or   {alignment-attempts 150
            silent?            true}} g]
   (let [interop-graph (graph->interop-graph g)
         interop-ham-1 (InteropHAM/create interop-graph 2)
         interop-ham-2 (InteropHAM/attemptToAlign interop-ham-1 alignment-attempts silent?)
         aligned? (.isAligned interop-ham-2)]
     (when aligned?
-      (.getCoordinates interop-ham-2))))
+      [(.getCounter interop-ham-2) (.getCoordinates interop-ham-2)])))
 
 (>defn graph->coords
   ([g {:keys [radius magnify]
@@ -104,17 +104,30 @@
               magnify 20}
        :as   options}]
    [::gr/graph map? => any?]
-   (let [n 20
-         timeout-chan (timeout 500)
-         cs (conj (repeatedly n chan) timeout-chan)]
-     (doseq [c cs]
-       (go (when-let [coords (-graph->coords options g)]
-             (>! c coords))))
-     (let [[v c] (alts!! cs)]
-       (when (not= c timeout-chan)
-         (-> v
-             interop-coords->coords
-             (scale-coords radius magnify))))))
+   (let [n 30
+         t 1000
+         timeout-chan (timeout t)
+         cs (repeatedly n chan)]
+     (go-loop [cs cs
+               ordinal 1]
+       (when (seq cs)
+         (if-let [[counted coords :as res] (-graph->coords options g)]
+           (do
+             (dev/log-on "Aligned ordinal" ordinal "after" counted "advances")
+             (>! (first cs) (conj res ordinal))
+             (recur (next cs) (inc ordinal)))
+           (do
+             ;; Here we couldn't reach alignment after exhausting all the attempts allowed,
+             ;; so we start afresh
+             (recur (next cs) (inc ordinal))))))
+     (let [[[counted coords ordinal] c] (alts!! (conj cs timeout-chan))]
+       (if (not= c timeout-chan)
+         (do
+           (dev/log-on "Winner is ordinal" ordinal "aligned after" counted "advances")
+           (-> coords
+               interop-coords->coords
+               (scale-coords radius magnify)))
+         (dev/log-on "Timed out at" t "before any of the" n "channels could align")))))
   ([g]
    [::gr/graph => any?]
    (graph->coords g {})))
