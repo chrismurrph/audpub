@@ -12,7 +12,14 @@
     [com.syncleus.dann.math Vector]
     (java.util Map)))
 
-(def default-radius 10)
+(def options {::radius             10
+              ::margin             10
+              ::magnify            20
+              ::alignment-attempts 150
+              ::silent?            true
+              ::number-of-tries    30
+              ::max-user-wait-time 1000
+              })
 
 (defn node->interop-node [node]
   (InteropNode. (util/kw->number node)))
@@ -69,9 +76,9 @@
   Just going off what HyperassociativeMap returns.
   To get it bang in the top left corner we will need to find the top-most and left-most nodes.
   Apply a margin after that."
-  [coords radius magnify]
-  (let [origin-shift 10
-        margin -10
+  [coords]
+  (let [origin-shift (::radius options)
+        {:keys [::radius ::margin ::magnify]} options
         coords (->> coords
                     (map (fn [[k v]]
                            (let [[x y] v
@@ -82,55 +89,48 @@
     (->> coords
          (map (fn [[k v]]
                 (let [[x y] v
-                      new-x (- x left-shift margin)
-                      new-y (- y raise-shift margin)]
+                      new-x (- x left-shift (- margin))
+                      new-y (- y raise-shift (- margin))]
                   [k [new-x new-y]])))
          (into {}))))
 
 (defn- -graph->coords
-  [{:keys [alignment-attempts silent?]
-    :or   {alignment-attempts 150
-           silent?            true}} g]
-  (let [interop-graph (graph->interop-graph g)
+  [g]
+  (let [{:keys [::alignment-attempts ::silent?]} options
+        interop-graph (graph->interop-graph g)
         interop-ham-1 (InteropHAM/create interop-graph 2)
         interop-ham-2 (InteropHAM/attemptToAlign interop-ham-1 alignment-attempts silent?)
         aligned? (.isAligned interop-ham-2)]
     (when aligned?
       [(.getCounter interop-ham-2) (.getCoordinates interop-ham-2)])))
 
-(>defn graph->coords
-  ([g {:keys [radius magnify]
-       :or   {radius  default-radius
-              magnify 20}
-       :as   options}]
-   [::gr/graph map? => any?]
-   (let [n 30
-         t 1000
-         timeout-chan (timeout t)
-         cs (repeatedly n chan)]
-     (go-loop [cs cs
-               ordinal 1]
-       (when (seq cs)
-         (if-let [[counted coords :as res] (-graph->coords options g)]
-           (do
-             (dev/log-on "Aligned ordinal" ordinal "after" counted "advances")
-             (>! (first cs) (conj res ordinal))
-             (recur (next cs) (inc ordinal)))
-           (do
-             ;; Here we couldn't reach alignment after exhausting all the attempts allowed,
-             ;; so we start afresh
-             (recur (next cs) (inc ordinal))))))
-     (let [[[counted coords ordinal] c] (alts!! (conj cs timeout-chan))]
-       (if (not= c timeout-chan)
-         (do
-           (dev/log-on "Winner is ordinal" ordinal "aligned after" counted "advances")
-           (-> coords
-               interop-coords->coords
-               (scale-coords radius magnify)))
-         (dev/log-on "Timed out at" t "before any of the" n "channels could align")))))
-  ([g]
-   [::gr/graph => any?]
-   (graph->coords g {})))
+(>defn graph->coords [g]
+  [::gr/graph => any?]
+  (let [{:keys [::number-of-tries ::max-user-wait-time]} options
+        timeout-chan (timeout max-user-wait-time)
+        cs (repeatedly number-of-tries chan)]
+    (go-loop [cs cs
+              ordinal 1]
+      (when (seq cs)
+        (if-let [[counted coords :as res] (-graph->coords g)]
+          (do
+            ;; Does an extra unnecessary one before alts picks up the already decided winner. Not a problem that needs
+            ;; to be solved
+            (dev/log-on "Aligned ordinal" ordinal "after" counted "advances")
+            (>! (first cs) (conj res ordinal))
+            (recur (next cs) (inc ordinal)))
+          (do
+            ;; Here we couldn't reach alignment after exhausting all the attempts/advances allowed,
+            ;; so we start afresh on the next ordinal
+            (recur (next cs) (inc ordinal))))))
+    (let [[[counted coords ordinal] c] (alts!! (conj cs timeout-chan))]
+      (if (not= c timeout-chan)
+        (do
+          (dev/log-on "Winner is ordinal" ordinal "aligned after" counted "advances")
+          (-> coords
+              interop-coords->coords
+              scale-coords))
+        (dev/log-on "Timed out at" max-user-wait-time "before any of the" number-of-tries "channels could align")))))
 
 (defn x-1 []
   (let [g example/unreachable-nodes-graph

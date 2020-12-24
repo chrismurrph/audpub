@@ -2,7 +2,7 @@
   "Straight translation from Java code that didn't work out, see bottom of this file"
   (:require
     [audience-republic.graph :as gr]
-    [layout.math :as m]
+    [layout.math :as math]
     [com.fulcrologic.guardrails.core :refer [>defn => | ?]]
     [clojure.spec.alpha :as s]
     [audience-republic.util :as util :refer [swap!->]]
@@ -136,7 +136,7 @@
           (+ squared-sum (* coordinate coordinate)))
         0.0
         point)
-      m/sqrt))
+      math/sqrt))
 
 (defn coordinates->distance-test []
   (= 0.0 (coordinates->distance [0.0 0.0])))
@@ -153,13 +153,13 @@
   [{:keys [learning-rate]}
    association-equilibrium-distance
    {neighbour-vector-coords :coordinates :as neighbour-vector}]
-  (let [abs-distance (-> neighbour-vector-coords coordinates->distance m/abs)
+  (let [abs-distance (-> neighbour-vector-coords coordinates->distance math/abs)
         _ (dev/log-off "from" neighbour-vector-coords "to" abs-distance)
         diff-1 (- abs-distance association-equilibrium-distance)]
     (if (> abs-distance association-equilibrium-distance)
-      (let [new-distance (m/pow diff-1 ATTRACTION_STRENGTH)
-            new-distance (if (> (m/abs new-distance) (m/abs diff-1))
-                           (m/copy-sign (m/abs diff-1) new-distance)
+      (let [new-distance (math/pow diff-1 ATTRACTION_STRENGTH)
+            new-distance (if (> (math/abs new-distance) (math/abs diff-1))
+                           (math/copy-sign (math/abs diff-1) new-distance)
                            new-distance)]
         (update neighbour-vector :coordinates update-coordinates-f (* new-distance learning-rate)))
       (let [diff-2 (- association-equilibrium-distance abs-distance)
@@ -167,8 +167,8 @@
             ratio (/ diff-2 association-equilibrium-distance)
             _ (dev/log-off "ratio" ratio)
             new-distance (* (- EQUILIBRIUM_DISTANCE)
-                            (m/atanh ratio))
-            new-distance (if (> (m/abs new-distance) (m/abs diff-2))
+                            (math/atanh ratio))
+            new-distance (if (> (math/abs new-distance) (math/abs diff-2))
                            (* (- EQUILIBRIUM_DISTANCE)
                               diff-2)
                            new-distance)]
@@ -210,9 +210,9 @@
                                                               (calculate-relative-to old-location)
                                                               :coordinates
                                                               coordinates->distance)
-                                     new-distance (/ (- EQUILIBRIUM_DISTANCE) (m/pow node-vector-distance REPULSIVE_WEAKNESS))
-                                     new-distance (if (> (m/abs new-distance) (m/abs equilibrium-distance))
-                                                    (m/copy-sign equilibrium-distance new-distance)
+                                     new-distance (/ (- EQUILIBRIUM_DISTANCE) (math/pow node-vector-distance REPULSIVE_WEAKNESS))
+                                     new-distance (if (> (math/abs new-distance) (math/abs equilibrium-distance))
+                                                    (math/copy-sign equilibrium-distance new-distance)
                                                     new-distance)]
                                  (update m :coordinates update-coordinates-f (* new-distance learning-rate))
                                  m)

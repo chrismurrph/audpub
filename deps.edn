@@ -4,6 +4,7 @@
            com.fulcrologic/guardrails {:mvn/version "1.1.0"}
            cjmurphy/dev-lib           {:mvn/version "0.3.0"}
            org.clojure/core.async     {:mvn/version "1.3.610"}
+           com.rpl/specter            {:mvn/version "1.1.3"}
            ham-layout/ham-layout      {:local/root "/home/chris/IdeaProjects/ham_layout/out/production/artifacts/layout_a_graph_jar/layout_a_graph.jar"}
            }
  :aliases {:tset      {:extra-paths ["src/test"]}
