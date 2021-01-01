@@ -24,9 +24,9 @@
 
 (comment
   (should-be-able-to-write)
-  (metrics/shortest-path example/connected-graph :1 :12)
+  (metrics/shortest-path example/nodes-graph :1 :12)
   (metrics/shortest-path example/unreachable-nodes-graph :1 :2)
-  (metrics/shortest-path example/connected-graph :1 :2)
+  (metrics/shortest-path example/nodes-graph :1 :2)
   (run-example-dijkstra)
   )
 

@@ -4,5 +4,5 @@
     [audience-republic.example-data :as example]))
 
 (defn x-3 []
-  (let [g example/connected-graph]
+  (let [g example/nodes-graph]
     (layout/show-graph g)))

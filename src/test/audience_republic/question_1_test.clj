@@ -34,6 +34,9 @@
   (is (= '([:1 [true 1] :2] [:2 nil :3] [:3 [true 2] :4])
          (q1/seq-graph-bfs example/simple-graph :1))))
 
+(defn x-1 []
+  (q1/seq-graph-bfs example/not-connected-graph :1))
+
 (comment
   (run-tests)
   )

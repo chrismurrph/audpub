@@ -20,10 +20,10 @@
 
 (comment
   (should-be-able-to-write)
-  (metrics/eccentricity example/connected-graph :1)
-  (metrics/radius example/connected-graph)
-  (metrics/diameter example/connected-graph)
-  (metrics/shortest-path example/connected-graph :1 :12)
-  (metrics/longest-path example/connected-graph :1 :12)
+  (metrics/eccentricity example/nodes-graph :1)
+  (metrics/radius example/nodes-graph)
+  (metrics/diameter example/nodes-graph)
+  (metrics/shortest-path example/nodes-graph :1 :12)
+  (metrics/longest-path example/nodes-graph :1 :12)
   )
 

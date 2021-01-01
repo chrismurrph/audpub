@@ -13,13 +13,13 @@
     (is (= 5 (-> (metrics/update-weights-and-path example/unreachable-nodes-graph costs-m unvisited :1 false) :3 :weight)))))
 
 (deftest shortest-from-1-to-6
-  (is (= [:3 :5 :7 :6] (metrics/shortest-path example/connected-graph :1 :6))))
+  (is (= [:3 :5 :7 :6] (metrics/shortest-path example/nodes-graph :1 :6))))
 
 (deftest shortest-from-1-to-12
-  (is (= [:3 :8 :9 :11 :12] (metrics/shortest-path example/connected-graph :1 :12))))
+  (is (= [:3 :8 :9 :11 :12] (metrics/shortest-path example/nodes-graph :1 :12))))
 
 (deftest shortest-from-1-to-2
-  (is (= [:3 :4 :2] (metrics/shortest-path example/connected-graph :1 :2))))
+  (is (= [:3 :4 :2] (metrics/shortest-path example/nodes-graph :1 :2))))
 
 (deftest no-path-when-one-does-not-exist
   (is (nil? (metrics/shortest-path example/unreachable-nodes-graph :1 :2))))

@@ -55,7 +55,7 @@
 
 (deftest extra-edges
   (let [num-extras 3
-        g-before example/connected-graph
+        g-before example/nodes-graph
         spaces-available-nodes (open-nodes-f g-before)
         g-after (q2/extra-edges-into-graph g-before spaces-available-nodes num-extras)]
     (is (= (+ num-extras (metrics/edge-count g-before)) (metrics/edge-count g-after)))

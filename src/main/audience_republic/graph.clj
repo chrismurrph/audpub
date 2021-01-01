@@ -131,10 +131,10 @@
   (set (or (-> g node keys) #{})))
 
 #_(defn traversable-edges [g node]
-  (->> (traversable-nodes g node)
-       (map (fn [neighbour]
-              [node neighbour]))
-       set))
+    (->> (traversable-nodes g node)
+         (map (fn [neighbour]
+                [node neighbour]))
+         set))
 
 (>defn non-traversable-nodes
   [reversed-g node]
@@ -156,3 +156,31 @@
                    (map (fn [neighbour]
                           [neighbour node]))))
       set))
+
+;;
+;; Will be part of a graph library although currently in Reveal
+;;
+
+(defn kw->number [kw]
+  (try
+    (some-> kw name Long/parseLong)
+    (catch Throwable th nil)))
+
+(defn nodes-in-edges [g]
+  (set (mapcat (fn [m]
+                 (keys m)) (vals g))))
+
+(defn x-1 []
+  (nodes-in-edges example/nodes-graph))
+
+(defn graph? [x]
+  (let [nodes (-> x keys set)]
+    (and (map? x)
+         (-> x vals first map?)
+         (every? kw->number nodes)
+         (clojure.set/subset? (nodes-in-edges x) nodes))))
+
+(defn x-2 []
+  (every? graph? [example/simple-graph example/full-graph example/nodes-graph example/unreachable-nodes-graph
+                  example/not-connected-graph]))
+

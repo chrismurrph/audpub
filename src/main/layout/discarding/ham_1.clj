@@ -319,7 +319,7 @@
   (dev/log-a "aligned?" (aligned-metrics ham-atom) "\n"
              (dev/pp-str (->> @ham-atom
                               :coordinates
-                              dev/probe-off
+                              dev/probe->>off
                               (map (fn [[k {:keys [coordinates] :as v}]]
                                      [k (mapv (partial * 10) coordinates)]))
                               (sort-by #(-> % first util/kw->number))

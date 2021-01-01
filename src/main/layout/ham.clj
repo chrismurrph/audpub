@@ -12,14 +12,14 @@
     [com.syncleus.dann.math Vector]
     (java.util Map)))
 
-(def options {::radius             10
-              ::margin             10
-              ::magnify            20
-              ::alignment-attempts 150
-              ::silent?            true
-              ::number-of-tries    30
-              ::max-user-wait-time 1000
-              })
+(def options (tap> {::radius             10
+                    ::margin             10
+                    ::magnify            20
+                    ::alignment-attempts 150
+                    ::silent?            true
+                    ::number-of-tries    30
+                    ::max-user-wait-time 1000
+                    }))
 
 (defn node->interop-node [node]
   (InteropNode. (util/kw->number node)))

@@ -95,7 +95,7 @@
 (defn vertex-view->targets [g vertex-view]
   (let [index (vertex-view->index-number vertex-view)]
     (assert (int? index) ["No index" vertex-view])
-    (-> index str keyword dev/probe-off g keys)))
+    (-> index str keyword dev/probe->off g keys)))
 
 (defn x-2 []
   (let [g example/simple-graph]
