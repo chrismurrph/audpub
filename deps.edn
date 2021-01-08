@@ -16,8 +16,8 @@
                        :extra-deps  {org.clojure/tools.namespace {:mvn/version "0.3.1"}}}
            :reveal    {
                        :extra-deps {vlaaad/reveal
-                                    {:local/root "/home/chris/IdeaProjects/reveal"}
-                                    ;{:mvn/version "RELEASE"}
+                                    ;{:local/root "/home/chris/IdeaProjects/reveal"}
+                                    {:mvn/version "RELEASE"}
                                     }
                        ;; Works better if run from user.clj in REPL
                        ;:main-opts  ["-m" "vlaaad.reveal" "repl"]
