@@ -134,4 +134,5 @@
 
 (comment
   (dev/pp (generate-graph 20 191))
+  (tap> (generate-graph 50 120))
   )

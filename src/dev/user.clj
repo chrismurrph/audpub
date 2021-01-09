@@ -1,5 +1,7 @@
 (ns user
   (:require
+    [audience-republic.example-data :as example-data]
+    [au.com.seasoft.graph.reveal.view]
     [clojure.pprint :refer [pprint]]
     [clojure.stacktrace :as st]
     [clojure.tools.namespace.repl :as tools-ns :refer [set-refresh-dirs]]
@@ -32,6 +34,7 @@
     (require 'vlaaad.reveal)
     (add-tap (vlaaad.reveal/ui)))
   ;; second snippet
+  (tap> example-data/full-graph)
   (tap> {:fx/type :web-view
          :url     "http://www.seasoft.com.au"})
   (tap> {:a 1})
